@@ -31,6 +31,7 @@ function freshState() {
 
 let G = freshState();
 let timerInterval = null;
+let gameStarted = false;
 
 /* ══════════════════════════════════════
    CLIENTES CONECTADOS
@@ -216,13 +217,13 @@ const MIME = {
 const httpServer = http.createServer((req, res) => {
   let filePath;
   if (req.url === '/' || req.url === '/index.html') {
-    filePath = path.join(__dirname, "index.html");
+    filePath = path.join(__dirname, 'public', 'index.html');
   } else if (req.url === '/blue') {
-    filePath = path.join(__dirname, "blue.html");
+    filePath = path.join(__dirname, 'public', 'blue.html');
   } else if (req.url === '/red') {
-    filePath = path.join(__dirname, "red.html");
+    filePath = path.join(__dirname, 'public', 'red.html');
   } else {
-    filePath = path.join(__dirname, req.url);
+    filePath = path.join(__dirname, 'public', req.url);
   }
 
   fs.readFile(filePath, (err, data) => {
@@ -253,9 +254,12 @@ wss.on('connection', (ws) => {
 
       case 'register':
         clients.set(ws, { type: msg.role });
-        sendState(ws);
+        if (!gameStarted) {
+          sendTo(ws, { type: 'waiting' });
+        } else {
+          sendState(ws);
+        }
         console.log(`[+] Conectado: ${msg.role}`);
-        // Notificar a pantalla que alguien se unió
         broadcastAll({ type: 'playerJoined', role: msg.role });
         break;
 
@@ -274,8 +278,17 @@ wss.on('connection', (ws) => {
       case 'restart':
         clearInterval(timerInterval);
         G = freshState();
-        broadcastAll({ type: 'restart', qtext: G.qtext });
-        startTimer();
+        gameStarted = false;
+        broadcastAll({ type: 'waiting' });
+        break;
+
+      case 'startGame':
+        if (!gameStarted) {
+          gameStarted = true;
+          G = freshState();
+          broadcastAll({ type: 'restart', qtext: G.qtext });
+          startTimer();
+        }
         break;
     }
   });
@@ -287,6 +300,13 @@ wss.on('connection', (ws) => {
       broadcastAll({ type: 'playerLeft', role: info.type });
     }
     clients.delete(ws);
+    // Si no quedan clientes, reiniciar estado
+    if (clients.size === 0) {
+      clearInterval(timerInterval);
+      G = freshState();
+      gameStarted = false;
+      console.log('[*] Todos desconectados — juego reiniciado');
+    }
   });
 });
 
@@ -313,5 +333,4 @@ httpServer.listen(PORT, '0.0.0.0', () => {
   console.log('');
 });
 
-// Iniciar primer timer
-startTimer();
+// El juego espera a que alguien presione Iniciar
