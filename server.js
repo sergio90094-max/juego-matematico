@@ -216,13 +216,13 @@ const MIME = {
 const httpServer = http.createServer((req, res) => {
   let filePath;
   if (req.url === '/' || req.url === '/index.html') {
-    filePath = path.join(__dirname, 'public', 'index.html');
+    filePath = path.join(__dirname, "index.html");
   } else if (req.url === '/blue') {
-    filePath = path.join(__dirname, 'public', 'blue.html');
+    filePath = path.join(__dirname, "blue.html");
   } else if (req.url === '/red') {
-    filePath = path.join(__dirname, 'public', 'red.html');
+    filePath = path.join(__dirname, "red.html");
   } else {
-    filePath = path.join(__dirname, 'public', req.url);
+    filePath = path.join(__dirname, req.url);
   }
 
   fs.readFile(filePath, (err, data) => {
