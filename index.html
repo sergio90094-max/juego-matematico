@@ -108,6 +108,9 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 #startBtn { background:linear-gradient(135deg,#2E7D32,#43A047); color:white; border:none; padding:13px 36px; border-radius:50px; font-family:'Fredoka One',cursive; font-size:1.15rem; cursor:pointer; box-shadow:0 5px 18px rgba(46,125,50,.4); transition:transform .2s; }
 #startBtn:hover { transform:translateY(-2px); }
 #startBtn:disabled { background:#ccc; box-shadow:none; cursor:default; }
+#soloBtn { background:linear-gradient(135deg,#E65100,#FF8F00); color:white; border:none; padding:10px 28px; border-radius:50px; font-family:'Fredoka One',cursive; font-size:.95rem; cursor:pointer; box-shadow:0 4px 14px rgba(230,81,0,.4); transition:transform .2s; margin-top:10px; }
+#soloBtn:hover { transform:translateY(-2px); }
+#btn-group { display:flex; flex-direction:column; align-items:center; gap:0; }
 
 .cfp { position:fixed; top:-20px; border-radius:2px; animation:cf 2.5s ease-in forwards; pointer-events:none; z-index:300; }
 @keyframes cf { 0%{transform:translateY(0) rotate(0);opacity:1;} 100%{transform:translateY(110vh) rotate(720deg);opacity:0;} }
@@ -269,6 +272,11 @@ let ws, G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'' };
   }
 
   function startGame() {
+    send({ type: 'startGame' });
+    document.getElementById('lobby').classList.add('hidden');
+  }
+
+  function startSolo() {
     send({ type: 'startGame' });
     document.getElementById('lobby').classList.add('hidden');
   }
@@ -708,7 +716,10 @@ function toggleMusic() {
       <div class="lteam blue" id="lstat-blue">🔵 Azul: esperando</div>
       <div class="lteam red"  id="lstat-red">🔴 Rojo: esperando</div>
     </div>
-    <button id="startBtn" onclick="startGame()" disabled>▶ Iniciar Juego</button>
+    <div id="btn-group">
+      <button id="startBtn" onclick="startGame()" disabled>▶ Iniciar con ambos equipos</button>
+      <button id="soloBtn" onclick="startSolo()">🖥️ Jugar Solo (sin jugadores)</button>
+    </div>
   </div>
 </div>
 
