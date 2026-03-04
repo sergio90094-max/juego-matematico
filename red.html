@@ -204,6 +204,14 @@ html, body {
 #over-emoji { font-size: 3.5rem; margin-bottom: 8px; }
 #over-title { font-family: 'Fredoka One', cursive; font-size: 2rem; color: white; margin-bottom: 6px; }
 #over-sub   { font-size: .9rem; color: rgba(255,255,255,.75); font-weight: 800; }
+
+/* ── PAUSA OVERLAY ── */
+#pause-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:500; align-items:center; justify-content:center; flex-direction:column; }
+#pause-overlay.show { display:flex; }
+#pause-card { background:white; border-radius:20px; padding:30px 44px; text-align:center; }
+#pause-emoji { font-size:3rem; }
+#pause-title { font-family:'Fredoka One',cursive; font-size:2rem; color:#1A237E; margin-top:6px; }
+#pause-sub { color:#90A4AE; font-weight:800; font-size:.9rem; margin-top:4px; }
 </style>
 </head>
 <body>
@@ -224,7 +232,7 @@ html, body {
 </div>
 
 <div id="tbar-wrap"><div id="tbar"></div></div>
-<div id="timer-num">28</div>
+<div id="timer-num">38</div>
 
 <div id="ans-box">
   <div id="ans-val">?</div>
@@ -255,7 +263,7 @@ html, body {
 
 <script>
 const TEAM = 'r';
-const TS   = 28;
+const TS   = 38;
 let ws, buf = '';
 
 function connectWS() {
@@ -285,6 +293,12 @@ function handle(msg) {
       document.getElementById('ans-val').textContent = buf || '?';
       updateTimer(msg.timer);
       break;
+    case 'pause':
+      const po = document.getElementById('pause-overlay');
+      if (msg.paused) po.classList.add('show');
+      else po.classList.remove('show');
+      break;
+
     case 'timer':
       updateTimer(msg.value);
       break;
@@ -360,5 +374,13 @@ function setStatus(txt, ok) {
 
 window.addEventListener('load', connectWS);
 </script>
+
+<div id="pause-overlay">
+  <div id="pause-card">
+    <div id="pause-emoji">⏸️</div>
+    <div id="pause-title">Juego en Pausa</div>
+    <div id="pause-sub">Esperando al profesor...</div>
+  </div>
+</div>
 </body>
 </html>

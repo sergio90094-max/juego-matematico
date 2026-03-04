@@ -24,7 +24,7 @@ function freshState() {
     sb:    0,  sr:  0, // puntos totales
     cb:    0,  cr:  0, // correctas por equipo
     over:  false,
-    timer: 28,
+    timer: 38,
     ib:    '',  ir: '' // buffers de input
   };
 }
@@ -32,6 +32,7 @@ function freshState() {
 let G = freshState();
 let timerInterval = null;
 let gameStarted = false;
+let gamePaused = false;
 
 /* ══════════════════════════════════════
    CLIENTES CONECTADOS
@@ -129,11 +130,12 @@ function broadcastState() {
 /* ══════════════════════════════════════
    TIMER
 ══════════════════════════════════════ */
-const TS = 28;
+const TS = 38;
 function startTimer() {
   clearInterval(timerInterval);
   G.timer = TS;
   timerInterval = setInterval(() => {
+    if (gamePaused) return;
     G.timer--;
     broadcastAll({ type: 'timer', value: G.timer });
     if (G.timer <= 0) {
@@ -279,12 +281,19 @@ wss.on('connection', (ws) => {
         clearInterval(timerInterval);
         G = freshState();
         gameStarted = false;
+        gamePaused = false;
         broadcastAll({ type: 'waiting' });
+        break;
+
+      case 'pause':
+        gamePaused = !gamePaused;
+        broadcastAll({ type: 'pause', paused: gamePaused });
         break;
 
       case 'startGame':
         if (!gameStarted) {
           gameStarted = true;
+          gamePaused = false;
           G = freshState();
           broadcastAll({ type: 'restart', qtext: G.qtext });
           startTimer();
@@ -305,6 +314,7 @@ wss.on('connection', (ws) => {
       clearInterval(timerInterval);
       G = freshState();
       gameStarted = false;
+      gamePaused = false;
       console.log('[*] Todos desconectados — juego reiniciado');
     }
   });
