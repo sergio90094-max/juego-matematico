@@ -30,6 +30,7 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 #timer-num.ok     { color:var(--gold); }
 #timer-num.urgent { color:var(--redl); animation:tpulse .5s infinite alternate; }
 @keyframes tpulse { to{transform:scale(1.15);} }
+#pause-bar { position:fixed; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:10px; z-index:100; }
 #tbar-wrap { width:100px; height:5px; background:#DDD; border-radius:99px; overflow:hidden; }
 #tbar { height:100%; width:100%; background:linear-gradient(90deg,#4CAF50,var(--gold),#F44336); border-radius:99px; transition:width 1s linear; }
 
@@ -178,6 +179,11 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
   </div>
 </div>
 
+<div id="pause-bar">
+  <button id="pauseBtn" onclick="togglePause()">⏸ Pausar</button>
+  <button id="rbtn" onclick="restartGame()">🔄 Nueva Partida</button>
+</div>
+
 <div id="main">
   <!-- BLUE SIDE -->
   <div class="side left">
@@ -252,7 +258,7 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
       <div class="wst"><div class="wstl">Eq.1 ✓</div><div class="wstv" id="wsb" style="color:var(--blue)">0</div></div>
       <div class="wst"><div class="wstl">Eq.2 ✓</div><div class="wstv" id="wsr2" style="color:var(--red)">0</div></div>
     </div>
-    <button id="pauseBtn" onclick="togglePause()">⏸ Pausar</button><button id="rbtn" onclick="restartGame()">🔄 Nueva Partida</button>
+    
   </div>
 </div>
 
