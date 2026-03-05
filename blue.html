@@ -266,20 +266,40 @@ const TEAM = 'b';
 const TS   = 38;
 let ws, buf = '';
 
+let pingInterval = null;
+
 function connectWS() {
   const host = window.location.host;
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
   ws = new WebSocket(protocol + host);
+
   ws.onopen = () => {
     ws.send(JSON.stringify({ type:'register', role:'blue' }));
     setStatus('✅ Conectado', true);
+    // Heartbeat para mantener la conexión viva en Render
+    clearInterval(pingInterval);
+    pingInterval = setInterval(() => {
+      if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type:'ping' }));
+    }, 20000);
   };
+
   ws.onmessage = (e) => handle(JSON.parse(e.data));
+
+  ws.onerror = () => { ws.close(); };
+
   ws.onclose = () => {
+    clearInterval(pingInterval);
     setStatus('🔄 Reconectando...', false);
-    setTimeout(connectWS, 2000);
+    setTimeout(connectWS, 1500);
   };
 }
+
+// Reconectar si la pestaña vuelve a ser visible
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && (!ws || ws.readyState !== 1)) {
+    connectWS();
+  }
+});
 
 function send(obj) { if(ws && ws.readyState===1) ws.send(JSON.stringify(obj)); }
 

@@ -260,8 +260,11 @@ wss.on('connection', (ws) => {
           sendTo(ws, { type: 'waiting' });
         } else {
           sendState(ws);
+          // If game paused, notify the reconnected player
+          if (gamePaused) sendTo(ws, { type: 'pause', paused: true });
         }
-        console.log(`[+] Conectado: ${msg.role}`);
+        console.log(`[+] Reconectado/Conectado: ${msg.role}`);
+        // Notify screen of current connected players
         broadcastAll({ type: 'playerJoined', role: msg.role });
         break;
 
@@ -284,6 +287,8 @@ wss.on('connection', (ws) => {
         gamePaused = false;
         broadcastAll({ type: 'waiting' });
         break;
+
+      case 'ping': break; // heartbeat
 
       case 'pause':
         gamePaused = !gamePaused;
