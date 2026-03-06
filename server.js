@@ -213,7 +213,10 @@ const MIME = {
   '.js':   'application/javascript',
   '.css':  'text/css',
   '.png':  'image/png',
-  '.ico':  'image/x-icon'
+  '.ico':  'image/x-icon',
+  '.mp3':  'audio/mpeg',
+  '.wav':  'audio/wav',
+  '.ogg':  'audio/ogg'
 };
 
 const httpServer = http.createServer((req, res) => {
