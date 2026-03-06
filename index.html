@@ -159,6 +159,7 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
     <div id="creator">✨ Creado por Sergio Arango</div>
   </div>
   <button id="music-toggle" onclick="toggleMusic()">🎵 Música: ON</button>
+  <button id="song-toggle" onclick="switchSong()" style="position:absolute;bottom:20px;right:160px;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:50px;padding:7px 16px;font-family:'Fredoka One',cursive;font-size:.85rem;color:white;cursor:pointer;backdrop-filter:blur(6px);">🎵 Canción 1</button>
 </div>
 
 <div id="topbar">
@@ -405,14 +406,30 @@ function handleMsg(msg) {
 
 
     case 'playerJoined':
-      if (msg.role === 'blue') blueReady = true;
-      if (msg.role === 'red')  redReady = true;
+      if (msg.role === 'blue') {
+        blueReady = true;
+        const cb = document.getElementById('conn-b');
+        if(cb){ cb.textContent='✅ Conectado'; cb.className='conn-badge online'; }
+      }
+      if (msg.role === 'red') {
+        redReady = true;
+        const cr = document.getElementById('conn-r');
+        if(cr){ cr.textContent='✅ Conectado'; cr.className='conn-badge online'; }
+      }
       updateLobby();
       break;
 
     case 'playerLeft':
-      if (msg.role === 'blue') blueReady = false;
-      if (msg.role === 'red')  redReady = false;
+      if (msg.role === 'blue') {
+        blueReady = false;
+        const cb2 = document.getElementById('conn-b');
+        if(cb2){ cb2.textContent='📱 Sin conectar'; cb2.className='conn-badge offline'; }
+      }
+      if (msg.role === 'red') {
+        redReady = false;
+        const cr2 = document.getElementById('conn-r');
+        if(cr2){ cr2.textContent='📱 Sin conectar'; cr2.className='conn-badge offline'; }
+      }
       updateLobby();
       break;
 
@@ -628,85 +645,130 @@ function startMusic(){
    MÚSICA DE FONDO — Web Audio API
    Melodía animada generada sin archivos externos
 ══════════════════════════════════════ */
-let bgMusic = null, musicOn = true, musicNodes = [];
+let bgMusic = null, musicOn = true, musicNodes = [], currentSong = 0;
+const songNames = ['🎵 Canción 1', '⚔️ Canción 2'];
 
 function initMusic() {
   bgMusic = new (window.AudioContext || window.webkitAudioContext)();
 }
 
+function switchSong() {
+  currentSong = (currentSong + 1) % songNames.length;
+  document.getElementById('song-toggle').textContent = songNames[currentSong];
+  if (musicOn) { stopMusic(); playMusic(); }
+}
+
 function playMusic() {
   if (!bgMusic || !musicOn) return;
   stopMusic();
+  if (currentSong === 0) playSong1();
+  else playSong2();
+}
 
-  /* ── Música relajante tipo ambient/piano suave ──
-     BPM lento, ondas sinusoidales puras, volumen bajo,
-     fade in/out largo para sonido cálido y suave        */
-  const bpm  = 72;
-  const beat = 60 / bpm;
+/* ── CANCIÓN 1: Ambient suave original ── */
+function playNote(freq, time, dur, vol, type) {
+  if (!bgMusic || !musicOn) return;
+  try {
+    const o = bgMusic.createOscillator();
+    const g = bgMusic.createGain();
+    const f = bgMusic.createBiquadFilter();
+    f.type = 'lowpass'; f.frequency.value = 1200; f.Q.value = 0.5;
+    const delay = bgMusic.createDelay(0.4);
+    const delayGain = bgMusic.createGain();
+    delay.delayTime.value = 0.3; delayGain.gain.value = 0.18;
+    o.connect(f); f.connect(g); g.connect(bgMusic.destination);
+    f.connect(delay); delay.connect(delayGain); delayGain.connect(bgMusic.destination);
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, time);
+    g.gain.linearRampToValueAtTime(vol, time + dur * 0.25);
+    g.gain.setValueAtTime(vol, time + dur * 0.65);
+    g.gain.linearRampToValueAtTime(0, time + dur);
+    o.start(time); o.stop(time + dur);
+    musicNodes.push(o);
+  } catch(e) {}
+}
 
-  /* Melodía suave — notas de Do mayor en octava media */
+function playSong1() {
+  const bpm = 72, beat = 60 / bpm;
   const melody = [
     261.63, 293.66, 329.63, 349.23,
     392.00, 349.23, 329.63, 261.63,
     293.66, 329.63, 392.00, 440.00,
     392.00, 349.23, 293.66, 261.63,
   ];
-
-  /* Pad armónico — acordes suaves de fondo */
   const pad = [
-    [130.81, 164.81, 196.00],  /* Do */
-    [146.83, 174.61, 220.00],  /* Re */
-    [164.81, 196.00, 246.94],  /* Mi */
-    [130.81, 164.81, 196.00],  /* Do */
+    [130.81, 164.81, 196.00],
+    [146.83, 174.61, 220.00],
+    [164.81, 196.00, 246.94],
+    [130.81, 164.81, 196.00],
   ];
-
   const loopLen = melody.length * beat;
-
   function scheduleLoop(startTime) {
-    /* Melodía principal — sine suave, volumen muy bajo */
-    melody.forEach((freq, i) => {
-      const t = startTime + i * beat;
-      playNote(freq, t, beat * 0.85, 0.055, 'sine');
-    });
-
-    /* Pad de acordes — cada 4 beats, sine muy suave */
-    pad.forEach((chord, i) => {
-      const t = startTime + i * beat * 4;
-      chord.forEach(freq => playNote(freq, t, beat * 3.6, 0.025, 'sine'));
-    });
-
-    setTimeout(() => {
-      if (musicOn) scheduleLoop(startTime + loopLen);
-    }, (loopLen - 0.2) * 1000);
+    melody.forEach((freq, i) => playNote(freq, startTime + i * beat, beat * 0.85, 0.055, 'sine'));
+    pad.forEach((chord, i) => { const t = startTime + i * beat * 4; chord.forEach(f => playNote(f, t, beat * 3.6, 0.025, 'sine')); });
+    setTimeout(() => { if (musicOn && currentSong===0) scheduleLoop(startTime + loopLen); }, (loopLen - 0.2) * 1000);
   }
+  scheduleLoop(bgMusic.currentTime + 0.1);
+}
 
-  function playNote(freq, time, dur, vol, type) {
+/* ── CANCIÓN 2: Guerra / Persecución épica ── */
+function playSong2() {
+  const bpm = 160, beat = 60 / bpm;
+  // Melodía épica de persecución — escala menor, ritmo rápido agresivo
+  const melody = [
+    220.00, 220.00, 329.63, 293.66,
+    261.63, 261.63, 246.94, 220.00,
+    196.00, 220.00, 246.94, 261.63,
+    293.66, 261.63, 246.94, 196.00,
+    220.00, 329.63, 392.00, 440.00,
+    392.00, 349.23, 329.63, 293.66,
+    261.63, 293.66, 329.63, 349.23,
+    329.63, 293.66, 261.63, 220.00,
+  ];
+  // Bajo pulsante que marca el ritmo de guerra
+  const bass = [
+    110.00, 0, 110.00, 0,
+    98.00,  0, 98.00,  0,
+    87.31,  0, 87.31,  0,
+    98.00,  0, 98.00,  0,
+  ];
+  // Percusión con ruido
+  function playDrum(time, vol) {
     if (!bgMusic || !musicOn) return;
     try {
-      const o = bgMusic.createOscillator();
+      const buf = bgMusic.createBuffer(1, bgMusic.sampleRate * 0.08, bgMusic.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
+      const src = bgMusic.createBufferSource();
+      src.buffer = buf;
       const g = bgMusic.createGain();
-      /* Filtro paso bajo suave para quitar brillos agresivos */
-      const f = bgMusic.createBiquadFilter();
-      f.type = 'lowpass'; f.frequency.value = 1200; f.Q.value = 0.5;
-      /* Reverb simple con delay */
-      const delay = bgMusic.createDelay(0.4);
-      const delayGain = bgMusic.createGain();
-      delay.delayTime.value = 0.3;
-      delayGain.gain.value = 0.18;
-      o.connect(f);
-      f.connect(g); g.connect(bgMusic.destination);
-      f.connect(delay); delay.connect(delayGain); delayGain.connect(bgMusic.destination);
-      o.type = type; o.frequency.value = freq;
-      /* Fade in/out suave */
-      g.gain.setValueAtTime(0, time);
-      g.gain.linearRampToValueAtTime(vol, time + dur * 0.25);
-      g.gain.setValueAtTime(vol, time + dur * 0.65);
-      g.gain.linearRampToValueAtTime(0, time + dur);
-      o.start(time); o.stop(time + dur);
-      musicNodes.push(o);
+      g.gain.setValueAtTime(vol, time);
+      g.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
+      src.connect(g); g.connect(bgMusic.destination);
+      src.start(time); src.stop(time + 0.1);
+      musicNodes.push(src);
     } catch(e) {}
   }
-
+  const loopLen = melody.length * beat;
+  function scheduleLoop(startTime) {
+    // Melodía épica con onda cuadrada para sonar agresiva
+    melody.forEach((freq, i) => {
+      if (freq > 0) playNote(freq, startTime + i * beat, beat * 0.7, 0.07, 'square');
+    });
+    // Bajo pulsante
+    bass.forEach((freq, i) => {
+      if (freq > 0) playNote(freq, startTime + i * beat * 2, beat * 1.6, 0.12, 'sawtooth');
+    });
+    // Bombo en cada beat fuerte
+    for (let i = 0; i < 16; i++) {
+      playDrum(startTime + i * beat * 2, i % 4 === 0 ? 0.6 : 0.3);
+    }
+    // Redoblante cada 4 beats
+    for (let i = 1; i < 8; i += 2) {
+      playDrum(startTime + i * beat * 4, 0.5);
+    }
+    setTimeout(() => { if (musicOn && currentSong===1) scheduleLoop(startTime + loopLen); }, (loopLen - 0.2) * 1000);
+  }
   scheduleLoop(bgMusic.currentTime + 0.1);
 }
 
