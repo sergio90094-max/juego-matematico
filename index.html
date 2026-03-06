@@ -75,7 +75,7 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 #arena { flex:1; background:var(--card); border-radius:13px; border:2px solid var(--border); box-shadow:0 2px 8px rgba(0,0,0,.07); position:relative; overflow:hidden; min-height:0; min-width:0; }
 #cnv { position:absolute; top:0; left:0; width:100%; height:100%; display:block; }
 #knot-shell { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
-#knot-dot { position:absolute; width:24px; height:24px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#FFD54F,#E65100); border:3px solid #BF360C; box-shadow:0 0 14px rgba(230,81,0,.6),0 3px 8px rgba(0,0,0,.3); transform:translate(-50%,-50%); transition:left .7s cubic-bezier(.34,1.56,.64,1),top .0s; }
+#knot-dot { position:absolute; width:26px; height:26px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#888,#222); border:2px solid #111; box-shadow:0 0 10px rgba(0,0,0,.5),0 3px 8px rgba(0,0,0,.4); transform:translate(-50%,-50%); transition:left .7s cubic-bezier(.34,1.56,.64,1),top .0s; }
 #prog { position:absolute; bottom:0; left:0; right:0; height:8px; }
 #pb { position:absolute; top:0; bottom:0; left:0; background:var(--bluel); border-radius:0 0 0 11px; transition:width .7s cubic-bezier(.34,1.56,.64,1); }
 #pr { position:absolute; top:0; bottom:0; right:0; background:var(--redl); border-radius:0 0 11px 0; transition:width .7s cubic-bezier(.34,1.56,.64,1); }
@@ -159,7 +159,7 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
     <div id="creator">✨ Creado por Sergio Arango</div>
   </div>
   <button id="music-toggle" onclick="toggleMusic()">🎵 Música: ON</button>
-  <button id="song-toggle" onclick="switchSong()" style="position:absolute;bottom:20px;right:160px;background:rgba(255,255,255,.15);border:2px solid rgba(255,255,255,.3);border-radius:50px;padding:7px 16px;font-family:'Fredoka One',cursive;font-size:.85rem;color:white;cursor:pointer;backdrop-filter:blur(6px);">🎵 Canción 1</button>
+  <audio id="bg-audio" src="/music.mp3" loop preload="auto"></audio>
 </div>
 
 <div id="topbar">
@@ -532,39 +532,164 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
 
 function figure(x,y,dir,s,p,h,f,sc) {
   sc=sc||1;
-  const skin='#FFCC80',shoe='#212121',t1=Math.sin(f*.13),t2=Math.cos(f*.13),lean=dir*(8+t1*3);
+  const skin='#F5C98A', darkSkin='#C8965A';
+  const t1=Math.sin(f*.13), t2=Math.cos(f*.13);
+  // dir=1 means facing right (blue team), dir=-1 means facing left (red team)
+  const lean = -dir*(5+t1*2); // lean toward the rope
+
   cx.save(); cx.translate(x,y); cx.rotate(lean*Math.PI/180); cx.scale(sc,sc);
-  cx.beginPath(); cx.ellipse(0,0,14,4,0,0,Math.PI*2); cx.fillStyle='rgba(0,0,0,0.14)'; cx.fill();
-  const lswing=t1*12;
-  const blx=dir*(-5)+lswing*.4,bly=-28;
-  cx.beginPath(); cx.moveTo(dir*(-2),-5); cx.lineTo(blx,bly); cx.strokeStyle=p; cx.lineWidth=7; cx.lineCap='round'; cx.stroke();
-  cx.save(); cx.translate(blx,bly); cx.rotate(.2*dir); cx.beginPath(); cx.ellipse(dir*3,0,8,3,0,0,Math.PI*2); cx.fillStyle=shoe; cx.fill(); cx.restore();
-  const flx=dir*5-lswing*.4,fly=-30;
-  cx.beginPath(); cx.moveTo(dir*2,-5); cx.lineTo(flx,fly); cx.strokeStyle=p; cx.lineWidth=7; cx.lineCap='round'; cx.stroke();
-  cx.save(); cx.translate(flx,fly); cx.rotate(-.2*dir); cx.beginPath(); cx.ellipse(dir*(-3),0,8,3,0,0,Math.PI*2); cx.fillStyle=shoe; cx.fill(); cx.restore();
-  cx.beginPath(); cx.roundRect(-9,-38,18,5,2); cx.fillStyle='#3E2723'; cx.fill();
-  cx.beginPath(); cx.roundRect(-3,-38,6,5,1); cx.fillStyle='#FFD700'; cx.fill();
-  cx.beginPath(); cx.moveTo(-9,-36); cx.bezierCurveTo(-10,-50,-10,-60,-8,-68); cx.lineTo(8,-68); cx.bezierCurveTo(10,-60,10,-50,9,-36); cx.closePath(); cx.fillStyle=s; cx.fill();
-  cx.beginPath(); cx.moveTo(-10,-55); cx.lineTo(10,-55); cx.strokeStyle='rgba(255,255,255,0.25)'; cx.lineWidth=5; cx.stroke();
-  for(let bi=0;bi<3;bi++){cx.beginPath();cx.arc(0,-44-bi*8,1.2,0,Math.PI*2);cx.fillStyle='rgba(255,255,255,0.4)';cx.fill();}
-  const apull=t2*6;
-  cx.beginPath(); cx.moveTo(dir*8,-64); cx.quadraticCurveTo(dir*16,-56,dir*20+apull*dir*.4,-45+apull*.3); cx.strokeStyle=s; cx.lineWidth=8; cx.lineCap='round'; cx.stroke();
-  cx.beginPath(); cx.arc(dir*20+apull*dir*.4,-45+apull*.3,4,0,Math.PI*2); cx.fillStyle=skin; cx.fill();
-  cx.beginPath(); cx.moveTo(dir*(-7),-62); cx.quadraticCurveTo(dir*(-16),-54,dir*(-26)-apull*dir*.5,-43+apull*.4); cx.strokeStyle=s; cx.lineWidth=8; cx.lineCap='round'; cx.stroke();
-  const a2ex=dir*(-26)-apull*dir*.5,a2ey=-43+apull*.4;
-  cx.beginPath(); cx.arc(a2ex,a2ey,5,0,Math.PI*2); cx.fillStyle=skin; cx.fill();
-  cx.beginPath(); cx.roundRect(-3.5,-76,7,10,2); cx.fillStyle=skin; cx.fill();
-  cx.beginPath(); cx.ellipse(0,-85,10,12,0,0,Math.PI*2); cx.fillStyle=skin; cx.fill();
-  cx.beginPath(); cx.ellipse(dir*(-10),-85,3,4,0,0,Math.PI*2); cx.fillStyle=skin; cx.fill();
-  cx.fillStyle='#2d2d2d'; cx.beginPath(); cx.arc(dir*3,-87,1.8,0,Math.PI*2); cx.fill(); cx.beginPath(); cx.arc(dir*(-3),-87,1.8,0,Math.PI*2); cx.fill();
-  cx.strokeStyle='#5D4037'; cx.lineWidth=1.8; cx.lineCap='round';
-  cx.beginPath(); cx.moveTo(dir*1,-91.5); cx.lineTo(dir*5.5,-93); cx.stroke();
-  cx.beginPath(); cx.moveTo(dir*(-1),-91.5); cx.lineTo(dir*(-5.5),-93); cx.stroke();
-  cx.beginPath(); cx.moveTo(-4,-80); cx.lineTo(4,-80); cx.strokeStyle='#A0522D'; cx.lineWidth=1.5; cx.stroke();
-  cx.beginPath(); cx.rect(-4,-80,8,3); cx.fillStyle='rgba(255,255,255,0.5)'; cx.fill();
-  cx.beginPath(); cx.ellipse(0,-95,13,4,0,0,Math.PI*2); cx.fillStyle=h; cx.fill();
-  cx.beginPath(); cx.roundRect(-9,-116,18,22,3); cx.fillStyle=h; cx.fill();
-  cx.beginPath(); cx.rect(-9,-100,18,4); cx.fillStyle='rgba(0,0,0,0.22)'; cx.fill();
+
+  // Shadow
+  cx.beginPath(); cx.ellipse(0,2,15,4,0,0,Math.PI*2); cx.fillStyle='rgba(0,0,0,0.15)'; cx.fill();
+
+  // === LEGS ===
+  const lswing = t1*10;
+  // Back leg
+  cx.beginPath(); cx.moveTo(dir*2,-5); cx.lineTo(dir*4+lswing*.3,-30); cx.strokeStyle=p; cx.lineWidth=8; cx.lineCap='round'; cx.stroke();
+  // Back boot
+  cx.save(); cx.translate(dir*4+lswing*.3,-30);
+  cx.beginPath(); cx.roundRect(-5,-8,11,9,2); cx.fillStyle='#2C1810'; cx.fill();
+  cx.beginPath(); cx.ellipse(dir*4,0,9,4,0,0,Math.PI*2); cx.fillStyle='#1A0A00'; cx.fill();
+  // Boot buckle
+  cx.beginPath(); cx.roundRect(-2,-6,5,4,1); cx.fillStyle='#C8A400'; cx.fill();
+  cx.restore();
+  // Front leg
+  cx.beginPath(); cx.moveTo(-dir*2,-5); cx.lineTo(-dir*4-lswing*.3,-32); cx.strokeStyle=p; cx.lineWidth=8; cx.lineCap='round'; cx.stroke();
+  // Front boot
+  cx.save(); cx.translate(-dir*4-lswing*.3,-32);
+  cx.beginPath(); cx.roundRect(-5,-8,11,9,2); cx.fillStyle='#3E2318'; cx.fill();
+  cx.beginPath(); cx.ellipse(-dir*4,0,9,4,0,0,Math.PI*2); cx.fillStyle='#1A0A00'; cx.fill();
+  cx.beginPath(); cx.roundRect(-2,-6,5,4,1); cx.fillStyle='#C8A400'; cx.fill();
+  cx.restore();
+
+  // === BODY (coat) ===
+  // Main coat
+  cx.beginPath();
+  cx.moveTo(-11,-36); cx.bezierCurveTo(-13,-52,-12,-64,-9,-72);
+  cx.lineTo(9,-72); cx.bezierCurveTo(12,-64,13,-52,11,-36);
+  cx.closePath(); cx.fillStyle=s; cx.fill();
+  // Coat darker edge/shadow
+  cx.beginPath(); cx.moveTo(-11,-36); cx.bezierCurveTo(-13,-52,-12,-64,-9,-72);
+  cx.strokeStyle='rgba(0,0,0,0.2)'; cx.lineWidth=2; cx.stroke();
+  // White shirt visible at chest
+  cx.beginPath(); cx.moveTo(-4,-72); cx.lineTo(4,-72); cx.lineTo(3,-54); cx.lineTo(-3,-54); cx.closePath();
+  cx.fillStyle='#F0EAD6'; cx.fill();
+  // Coat lapels
+  cx.beginPath(); cx.moveTo(-4,-72); cx.lineTo(-8,-58); cx.lineTo(0,-55); cx.closePath();
+  cx.fillStyle='rgba(0,0,0,0.22)'; cx.fill();
+  cx.beginPath(); cx.moveTo(4,-72); cx.lineTo(8,-58); cx.lineTo(0,-55); cx.closePath(); cx.fill();
+  // Gold buttons
+  for(let bi=0;bi<4;bi++){
+    cx.beginPath(); cx.arc(0,-58+bi*6,1.8,0,Math.PI*2);
+    cx.fillStyle='#FFD700'; cx.fill();
+    cx.strokeStyle='#B8860B'; cx.lineWidth=0.5; cx.stroke();
+  }
+
+  // === BELT ===
+  cx.beginPath(); cx.roundRect(-11,-40,22,7,2); cx.fillStyle='#3E2318'; cx.fill();
+  cx.beginPath(); cx.roundRect(-5,-41,10,8,2); cx.fillStyle='#C8A400'; cx.fill();
+  cx.beginPath(); cx.roundRect(-2.5,-40,5,6,1); cx.fillStyle='#8B6914'; cx.fill();
+
+  // === ARMS ===
+  const apull = t2*5;
+  // Back arm (pulling rope)
+  const bax = -dir*24-apull*dir*.4, bay = -46+apull*.3;
+  cx.beginPath(); cx.moveTo(-dir*8,-66); cx.quadraticCurveTo(-dir*18,-58, bax, bay);
+  cx.strokeStyle=s; cx.lineWidth=9; cx.lineCap='round'; cx.stroke();
+  cx.beginPath(); cx.arc(bax,bay,6,0,Math.PI*2); cx.fillStyle=skin; cx.fill();
+  // Rope grip fist detail
+  cx.beginPath(); cx.arc(bax,bay,3,0,Math.PI*2); cx.fillStyle=darkSkin; cx.fill();
+
+  // Front arm (sword arm)
+  const sax = dir*22+apull*dir*.4, say = -48+apull*.3;
+  cx.beginPath(); cx.moveTo(dir*8,-66); cx.quadraticCurveTo(dir*18,-58, sax, say);
+  cx.strokeStyle=s; cx.lineWidth=9; cx.lineCap='round'; cx.stroke();
+  cx.beginPath(); cx.arc(sax,say,6,0,Math.PI*2); cx.fillStyle=skin; cx.fill();
+
+  // === SWORD ===
+  const swordBase = Math.PI * (dir > 0 ? -0.25 : -0.75);
+  cx.save(); cx.translate(sax, say); cx.rotate(swordBase + t2*0.12*dir);
+  // Blade
+  cx.beginPath(); cx.moveTo(-1.5,0); cx.lineTo(1.5,0); cx.lineTo(0.8,-36); cx.lineTo(-0.8,-36); cx.closePath();
+  cx.fillStyle='#D8D8D8'; cx.fill();
+  // Blade shine
+  cx.beginPath(); cx.moveTo(0.3,0); cx.lineTo(0.3,-36); cx.strokeStyle='rgba(255,255,255,0.9)'; cx.lineWidth=0.7; cx.stroke();
+  // Crossguard
+  cx.beginPath(); cx.roundRect(-11,-1,22,5,3); cx.fillStyle='#C8A400'; cx.fill();
+  cx.strokeStyle='#FFD700'; cx.lineWidth=1; cx.stroke();
+  // Grip
+  cx.beginPath(); cx.roundRect(-3,4,6,12,3); cx.fillStyle='#5C2E00'; cx.fill();
+  // Pommel
+  cx.beginPath(); cx.arc(0,17,4,0,Math.PI*2); cx.fillStyle='#C8A400'; cx.fill();
+  cx.restore();
+
+  // === NECK ===
+  cx.beginPath(); cx.roundRect(-4,-80,8,10,2); cx.fillStyle=skin; cx.fill();
+
+  // === HEAD ===
+  cx.beginPath(); cx.ellipse(0,-91,12,14,0,0,Math.PI*2); cx.fillStyle=skin; cx.fill();
+  // Jaw / chin shadow
+  cx.beginPath(); cx.ellipse(0,-82,8,5,0,0.2,Math.PI-0.2); cx.fillStyle=darkSkin; cx.fill();
+  // Ear
+  cx.beginPath(); cx.ellipse(-dir*12,-91,3.5,5,0,0,Math.PI*2); cx.fillStyle=skin; cx.fill();
+  cx.beginPath(); cx.ellipse(-dir*12,-91,1.5,2.5,0,0,Math.PI*2); cx.fillStyle=darkSkin; cx.fill();
+  // Gold earring
+  cx.beginPath(); cx.arc(-dir*12,-85,2.5,0,Math.PI*2); cx.strokeStyle='#FFD700'; cx.lineWidth=1.8; cx.stroke();
+
+  // Eye patch (back eye)
+  cx.beginPath(); cx.ellipse(-dir*4,-92,4,3,0,0,Math.PI*2); cx.fillStyle='#1a1a1a'; cx.fill();
+  cx.beginPath(); cx.moveTo(-dir*4,-92); cx.lineTo(-dir*9,-96); cx.strokeStyle='#3E2318'; cx.lineWidth=1.5; cx.stroke();
+  cx.beginPath(); cx.arc(-dir*9,-97,2,0,Math.PI*2); cx.fillStyle='#3E2318'; cx.fill();
+
+  // Front eye (open, expressive)
+  cx.beginPath(); cx.ellipse(dir*4,-93,3.5,4,0,0,Math.PI*2); cx.fillStyle='white'; cx.fill();
+  cx.beginPath(); cx.arc(dir*4.5,-93,2,0,Math.PI*2); cx.fillStyle='#2C1810'; cx.fill();
+  cx.beginPath(); cx.arc(dir*5.5,-94.2,0.8,0,Math.PI*2); cx.fillStyle='white'; cx.fill();
+  // Eyebrow
+  cx.beginPath(); cx.moveTo(dir*1,-98); cx.quadraticCurveTo(dir*4,-100,dir*7,-98);
+  cx.strokeStyle='#5D3317'; cx.lineWidth=1.8; cx.lineCap='round'; cx.stroke();
+
+  // Mustache
+  cx.beginPath(); cx.moveTo(-2,-86); cx.quadraticCurveTo(-6,-84,-9,-86); cx.strokeStyle='#4A2800'; cx.lineWidth=2; cx.lineCap='round'; cx.stroke();
+  cx.beginPath(); cx.moveTo(2,-86); cx.quadraticCurveTo(6,-84,9,-86); cx.stroke();
+  // Smile
+  cx.beginPath(); cx.arc(dir*1,-84,5,0.2,Math.PI-0.2); cx.strokeStyle='#8B4513'; cx.lineWidth=1.5; cx.stroke();
+  // Stubble dots
+  cx.fillStyle='rgba(74,40,0,0.35)';
+  [-3,0,3,-1.5,1.5].forEach((ox,i)=>{cx.beginPath();cx.arc(ox,-80+i%2,0.8,0,Math.PI*2);cx.fill();});
+
+  // === PIRATE HAT (tricorn) ===
+  // Hat band
+  cx.beginPath(); cx.ellipse(0,-103,17,5,0,0,Math.PI*2); cx.fillStyle='#111'; cx.fill();
+  // Crown
+  cx.beginPath(); cx.moveTo(-13,-103); cx.bezierCurveTo(-12,-118,-10,-126,-8,-128);
+  cx.lineTo(8,-128); cx.bezierCurveTo(10,-126,12,-118,13,-103); cx.closePath();
+  cx.fillStyle='#1a1a1a'; cx.fill();
+  // Tricorn left flap
+  cx.beginPath(); cx.moveTo(-13,-103); cx.bezierCurveTo(-20,-105,-22,-108,-18,-112);
+  cx.bezierCurveTo(-14,-115,-10,-113,-8,-110); cx.lineTo(-8,-103); cx.closePath();
+  cx.fillStyle='#111'; cx.fill();
+  // Tricorn right flap
+  cx.beginPath(); cx.moveTo(13,-103); cx.bezierCurveTo(20,-105,22,-108,18,-112);
+  cx.bezierCurveTo(14,-115,10,-113,8,-110); cx.lineTo(8,-103); cx.closePath(); cx.fill();
+  // Gold trim on hat
+  cx.strokeStyle='#C8A400'; cx.lineWidth=1.5;
+  cx.beginPath(); cx.moveTo(-13,-103); cx.bezierCurveTo(-20,-105,-22,-108,-18,-112); cx.stroke();
+  cx.beginPath(); cx.moveTo(13,-103); cx.bezierCurveTo(20,-105,22,-108,18,-112); cx.stroke();
+  cx.beginPath(); cx.ellipse(0,-103,17,5,0,-Math.PI,0); cx.stroke();
+  // Skull on hat
+  cx.fillStyle='white';
+  cx.beginPath(); cx.ellipse(0,-118,5,4.5,0,0,Math.PI*2); cx.fill();
+  cx.fillStyle='#1a1a1a';
+  cx.beginPath(); cx.arc(-1.8,-119.5,1.2,0,Math.PI*2); cx.fill();
+  cx.beginPath(); cx.arc(1.8,-119.5,1.2,0,Math.PI*2); cx.fill();
+  cx.fillStyle='white';
+  [-2,0,2].forEach(tx=>{cx.beginPath();cx.rect(tx-0.8,-116,1.6,2.5);cx.fill();});
+  // Crossbones
+  cx.strokeStyle='white'; cx.lineWidth=1.2;
+  cx.beginPath(); cx.moveTo(-6,-113); cx.lineTo(6,-113); cx.stroke();
+  cx.beginPath(); cx.moveTo(-4,-111); cx.lineTo(4,-111); cx.stroke();
+
   cx.restore();
 }
 
@@ -575,7 +700,7 @@ function drawScene() {
   const RY=H*.56;
   cx.save(); cx.setLineDash([9,7]); cx.beginPath(); cx.moveTo(W*.5,4); cx.lineTo(W*.5,H-4); cx.strokeStyle='rgba(120,120,120,0.2)'; cx.lineWidth=2; cx.stroke(); cx.setLineDash([]); cx.restore();
   cx.beginPath(); cx.moveTo(W*.06,RY+4); cx.lineTo(W*.94,RY+4); cx.strokeStyle='rgba(0,0,0,0.12)'; cx.lineWidth=18; cx.lineCap='round'; cx.stroke();
-  const rg=cx.createLinearGradient(0,RY-8,0,RY+8); rg.addColorStop(0,'#E8B030'); rg.addColorStop(.35,'#A0522D'); rg.addColorStop(1,'#6B3010');
+  const rg=cx.createLinearGradient(0,RY-8,0,RY+8); rg.addColorStop(0,'#D4A843'); rg.addColorStop(.35,'#8B6914'); rg.addColorStop(1,'#5C3D0A');
   cx.beginPath(); cx.moveTo(W*.06,RY); cx.lineTo(W*.94,RY); cx.strokeStyle=rg; cx.lineWidth=15; cx.lineCap='round'; cx.stroke();
   cx.beginPath(); cx.moveTo(W*.07,RY-4); cx.lineTo(W*.93,RY-4); cx.strokeStyle='rgba(255,225,80,0.3)'; cx.lineWidth=3; cx.stroke();
   cx.save(); cx.strokeStyle='rgba(80,30,5,0.22)'; cx.lineWidth=2;
@@ -584,8 +709,8 @@ function drawScene() {
   cx.beginPath(); cx.moveTo(0,RY); cx.lineTo(W*.07,RY); cx.strokeStyle='#1565C0'; cx.lineWidth=12; cx.lineCap='round'; cx.stroke();
   cx.beginPath(); cx.moveTo(W*.93,RY); cx.lineTo(W,RY); cx.strokeStyle='#C62828'; cx.lineWidth=12; cx.lineCap='round'; cx.stroke();
   const sc=Math.min(W/700,H/230);
-  [W*.07,W*.15,W*.23].forEach((bx,i)=>figure(bx,RY,-1,['#1565C0','#1E88E5','#1976D2'][i],['#0D47A1','#0D47A1','#1565C0'][i],'#0D47A1',AF+i*22,sc));
-  [W*.93,W*.85,W*.77].forEach((rx,i)=>figure(rx,RY,1,['#C62828','#E53935','#D32F2F'][i],['#B71C1C','#B71C1C','#C62828'][i],'#B71C1C',AF+i*22,sc));
+  [W*.07,W*.15,W*.23].forEach((bx,i)=>figure(bx,RY,1,['#1565C0','#1E88E5','#1976D2'][i],['#0D47A1','#0D47A1','#1565C0'][i],'#0D47A1',AF+i*22,sc));
+  [W*.93,W*.85,W*.77].forEach((rx,i)=>figure(rx,RY,-1,['#C62828','#E53935','#D32F2F'][i],['#B71C1C','#B71C1C','#C62828'][i],'#B71C1C',AF+i*22,sc));
   const knotX=W*(0.5+(G.pos/50)*0.3);
   const kd=document.getElementById('knot-dot'); kd.style.left=knotX+'px'; kd.style.top=RY+'px';
 }
@@ -645,136 +770,18 @@ function startMusic(){
    MÚSICA DE FONDO — Web Audio API
    Melodía animada generada sin archivos externos
 ══════════════════════════════════════ */
-let bgMusic = null, musicOn = true, musicNodes = [], currentSong = 0;
-const songNames = ['🎵 Canción 1', '⚔️ Canción 2'];
+let musicOn = true;
 
-function initMusic() {
-  bgMusic = new (window.AudioContext || window.webkitAudioContext)();
-}
-
-function switchSong() {
-  currentSong = (currentSong + 1) % songNames.length;
-  document.getElementById('song-toggle').textContent = songNames[currentSong];
-  if (musicOn) { stopMusic(); playMusic(); }
-}
+function initMusic() {}
 
 function playMusic() {
-  if (!bgMusic || !musicOn) return;
-  stopMusic();
-  if (currentSong === 0) playSong1();
-  else playSong2();
-}
-
-/* ── CANCIÓN 1: Ambient suave original ── */
-function playNote(freq, time, dur, vol, type) {
-  if (!bgMusic || !musicOn) return;
-  try {
-    const o = bgMusic.createOscillator();
-    const g = bgMusic.createGain();
-    const f = bgMusic.createBiquadFilter();
-    f.type = 'lowpass'; f.frequency.value = 1200; f.Q.value = 0.5;
-    const delay = bgMusic.createDelay(0.4);
-    const delayGain = bgMusic.createGain();
-    delay.delayTime.value = 0.3; delayGain.gain.value = 0.18;
-    o.connect(f); f.connect(g); g.connect(bgMusic.destination);
-    f.connect(delay); delay.connect(delayGain); delayGain.connect(bgMusic.destination);
-    o.type = type; o.frequency.value = freq;
-    g.gain.setValueAtTime(0, time);
-    g.gain.linearRampToValueAtTime(vol, time + dur * 0.25);
-    g.gain.setValueAtTime(vol, time + dur * 0.65);
-    g.gain.linearRampToValueAtTime(0, time + dur);
-    o.start(time); o.stop(time + dur);
-    musicNodes.push(o);
-  } catch(e) {}
-}
-
-function playSong1() {
-  const bpm = 72, beat = 60 / bpm;
-  const melody = [
-    261.63, 293.66, 329.63, 349.23,
-    392.00, 349.23, 329.63, 261.63,
-    293.66, 329.63, 392.00, 440.00,
-    392.00, 349.23, 293.66, 261.63,
-  ];
-  const pad = [
-    [130.81, 164.81, 196.00],
-    [146.83, 174.61, 220.00],
-    [164.81, 196.00, 246.94],
-    [130.81, 164.81, 196.00],
-  ];
-  const loopLen = melody.length * beat;
-  function scheduleLoop(startTime) {
-    melody.forEach((freq, i) => playNote(freq, startTime + i * beat, beat * 0.85, 0.055, 'sine'));
-    pad.forEach((chord, i) => { const t = startTime + i * beat * 4; chord.forEach(f => playNote(f, t, beat * 3.6, 0.025, 'sine')); });
-    setTimeout(() => { if (musicOn && currentSong===0) scheduleLoop(startTime + loopLen); }, (loopLen - 0.2) * 1000);
-  }
-  scheduleLoop(bgMusic.currentTime + 0.1);
-}
-
-/* ── CANCIÓN 2: Guerra / Persecución épica ── */
-function playSong2() {
-  const bpm = 160, beat = 60 / bpm;
-  // Melodía épica de persecución — escala menor, ritmo rápido agresivo
-  const melody = [
-    220.00, 220.00, 329.63, 293.66,
-    261.63, 261.63, 246.94, 220.00,
-    196.00, 220.00, 246.94, 261.63,
-    293.66, 261.63, 246.94, 196.00,
-    220.00, 329.63, 392.00, 440.00,
-    392.00, 349.23, 329.63, 293.66,
-    261.63, 293.66, 329.63, 349.23,
-    329.63, 293.66, 261.63, 220.00,
-  ];
-  // Bajo pulsante que marca el ritmo de guerra
-  const bass = [
-    110.00, 0, 110.00, 0,
-    98.00,  0, 98.00,  0,
-    87.31,  0, 87.31,  0,
-    98.00,  0, 98.00,  0,
-  ];
-  // Percusión con ruido
-  function playDrum(time, vol) {
-    if (!bgMusic || !musicOn) return;
-    try {
-      const buf = bgMusic.createBuffer(1, bgMusic.sampleRate * 0.08, bgMusic.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / data.length);
-      const src = bgMusic.createBufferSource();
-      src.buffer = buf;
-      const g = bgMusic.createGain();
-      g.gain.setValueAtTime(vol, time);
-      g.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
-      src.connect(g); g.connect(bgMusic.destination);
-      src.start(time); src.stop(time + 0.1);
-      musicNodes.push(src);
-    } catch(e) {}
-  }
-  const loopLen = melody.length * beat;
-  function scheduleLoop(startTime) {
-    // Melodía épica con onda cuadrada para sonar agresiva
-    melody.forEach((freq, i) => {
-      if (freq > 0) playNote(freq, startTime + i * beat, beat * 0.7, 0.07, 'square');
-    });
-    // Bajo pulsante
-    bass.forEach((freq, i) => {
-      if (freq > 0) playNote(freq, startTime + i * beat * 2, beat * 1.6, 0.12, 'sawtooth');
-    });
-    // Bombo en cada beat fuerte
-    for (let i = 0; i < 16; i++) {
-      playDrum(startTime + i * beat * 2, i % 4 === 0 ? 0.6 : 0.3);
-    }
-    // Redoblante cada 4 beats
-    for (let i = 1; i < 8; i += 2) {
-      playDrum(startTime + i * beat * 4, 0.5);
-    }
-    setTimeout(() => { if (musicOn && currentSong===1) scheduleLoop(startTime + loopLen); }, (loopLen - 0.2) * 1000);
-  }
-  scheduleLoop(bgMusic.currentTime + 0.1);
+  const a = document.getElementById('bg-audio');
+  if (a && musicOn) { a.volume = 0.45; a.play().catch(()=>{}); }
 }
 
 function stopMusic() {
-  musicNodes.forEach(n => { try { n.stop(); } catch(e){} });
-  musicNodes = [];
+  const a = document.getElementById('bg-audio');
+  if (a) a.pause();
 }
 
 function toggleMusic() {
