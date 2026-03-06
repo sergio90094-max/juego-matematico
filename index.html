@@ -741,6 +741,28 @@ window.addEventListener('load', () => {
   spawnStars();
   initMusic();
   connectWS();
+
+  // Arrancar música al primer clic/toque en cualquier parte
+  function tryAutoPlay() {
+    const a = document.getElementById('bg-audio');
+    if (a && musicOn) {
+      a.volume = 0.45;
+      a.play().then(() => {
+        document.removeEventListener('click', tryAutoPlay);
+        document.removeEventListener('touchstart', tryAutoPlay);
+        document.removeEventListener('keydown', tryAutoPlay);
+      }).catch(() => {});
+    }
+  }
+  // Intentar inmediato (funciona en algunos navegadores)
+  setTimeout(() => {
+    const a = document.getElementById('bg-audio');
+    if (a && musicOn) a.play().catch(() => {});
+  }, 500);
+  // Si no, al primer toque
+  document.addEventListener('click', tryAutoPlay);
+  document.addEventListener('touchstart', tryAutoPlay);
+  document.addEventListener('keydown', tryAutoPlay);
 });
 
 /* ══════════════════════════════════════
