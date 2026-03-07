@@ -45,96 +45,46 @@ const clients = new Map(); // ws -> { type }
 ══════════════════════════════════════ */
 function rnd(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
 function genQ() {
-  const type = rnd(0, 11);
-  let a, b, c, ans, text;
+  const type = rnd(0, 5);
+  let a, b, ans, text;
 
   switch (type) {
 
-    // ── FÁCILES ──
-
-    case 0: // Multiplicación básica tablas 1-5
-      a = rnd(1,5); b = rnd(1,10);
-      ans = a*b; text = a+' × '+b+' = ?';
+    case 0: // Multiplicación directa
+      a = rnd(2,12); b = rnd(2,12);
+      ans = a*b; text = a + ' × ' + b + ' = ?';
       break;
 
-    case 1: // División básica divisor pequeño
-      b = rnd(1,5); ans = rnd(1,10); a = b*ans;
-      text = a+' ÷ '+b+' = ?';
+    case 1: // Multiplicación directa (tablas grandes)
+      a = rnd(6,12); b = rnd(6,12);
+      ans = a*b; text = a + ' × ' + b + ' = ?';
       break;
 
-    case 2: // Multiplicación con incógnita fácil
-      a = rnd(1,6); b = rnd(1,6);
-      { const mf = rnd(0,1);
-        if(mf===0){ ans=b; text=a+' × ? = '+(a*b); }
-        else      { ans=a; text='? × '+b+' = '+(a*b); }
-      }
+    case 2: // Multiplicación con incógnita izquierda
+      a = rnd(2,12); b = rnd(2,12);
+      ans = a; text = '? × ' + b + ' = ' + (a*b);
       break;
 
-    case 3: // Fracciones simples ½ y ¼
-      { const ft = rnd(0,1);
-        if(ft===0){ ans=rnd(1,24); a=ans*2; text='½ de '+a+' = ?'; }
-        else      { ans=rnd(1,12); a=ans*4; text='¼ de '+a+' = ?'; }
-      }
+    case 3: // Multiplicación con incógnita derecha
+      a = rnd(2,12); b = rnd(2,12);
+      ans = b; text = a + ' × ? = ' + (a*b);
       break;
 
-    case 4: // Doble y triple
-      { const dt = rnd(0,1);
-        if(dt===0){ a=rnd(2,20); ans=a*2; text='Doble de '+a+' = ?'; }
-        else      { a=rnd(2,15); ans=a*3; text='Triple de '+a+' = ?'; }
-      }
+    case 4: // División directa
+      b = rnd(2,12); ans = rnd(2,12); a = b*ans;
+      text = a + ' ÷ ' + b + ' = ?';
       break;
 
-    // ── MEDIOS ──
-
-    case 5: // Tablas del 6 al 12
-      a = rnd(6,12); b = rnd(1,12);
-      ans = a*b; text = a+' × '+b+' = ?';
-      break;
-
-    case 6: // División con incógnita media
-      b = rnd(2,10); { const coc=rnd(2,12); a=b*coc;
-        const xf=rnd(0,1);
-        if(xf===0){ ans=coc; text=a+' ÷ '+b+' = ?'; }
-        else      { ans=b;   text=a+' ÷ ? = '+coc; }
-      }
-      break;
-
-    case 7: // Fracciones ⅓ ¾ ⅔
-      { const ft = rnd(0,2);
-        if(ft===0){ ans=rnd(1,12); a=ans*3; text='⅓ de '+a+' = ?'; }
-        else if(ft===1){ const bs=rnd(1,8); a=bs*4; ans=bs*3; text='¾ de '+a+' = ?'; }
-        else { const bs2=rnd(1,9); a=bs2*3; ans=bs2*2; text='⅔ de '+a+' = ?'; }
-      }
-      break;
-
-    case 8: // Multiplicación de 3 factores
-      a = rnd(2,5); b = rnd(2,5); c = rnd(2,4);
-      ans = a*b*c; text = a+' × '+b+' × '+c+' = ?';
-      break;
-
-    // ── DIFÍCILES ──
-
-    case 9: // Potencias cuadradas
-      a = rnd(2,12);
-      ans = a*a; text = a+'² = ?';
-      break;
-
-    case 10: // Raíz cuadrada perfecta
-      { a = rnd(1,12); ans = a;
-        text = '√'+(a*a)+' = ?';
-      }
-      break;
-
-    case 11: // Porcentajes usando multiplicación
-      { const pcts = [10,20,25,50];
-        const pct = pcts[rnd(0,3)];
-        a = rnd(1,20)*10;
-        ans = Math.round(a*pct/100);
-        text = pct+'% de '+a+' = ?';
+    case 5: // División con incógnita
+      b = rnd(2,12); ans = rnd(2,12); a = b*ans;
+      { const xf = rnd(0,1);
+        if(xf===0){ text = a + ' ÷ ? = ' + ans; ans = b; }
+        else      { text = '? ÷ ' + b + ' = ' + ans; ans = a; }
       }
       break;
   }
   return { text, answer: Math.round(ans) };
+}};
 }
 
 /* ══════════════════════════════════════
