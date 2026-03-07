@@ -279,8 +279,10 @@ wss.on('connection', (ws) => {
           if (gamePaused) sendTo(ws, { type: 'pause', paused: true });
         }
         console.log(`[+] Reconectado/Conectado: ${msg.role}`);
-        // Notify screen of current connected players
-        broadcastAll({ type: 'playerJoined', role: msg.role });
+        // Only notify about actual players (not the screen itself)
+        if (msg.role === 'blue' || msg.role === 'red') {
+          broadcastAll({ type: 'playerJoined', role: msg.role });
+        }
         break;
 
       case 'input':

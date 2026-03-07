@@ -1033,52 +1033,87 @@ function drawScene() {
     return true;
   });
 
-  // ── SINGLE CANNONBALL — slides smoothly on water ──
+  // ── SINGLE CANNONBALL — tug of war style ──
   if(!ballInitialized) initBall();
 
-  // Smooth slide toward target
-  ballDisplayX += (ballProgress - ballDisplayX) * 0.07;
+  // Smooth slide toward target (easing like the old rope)
+  ballDisplayX += (ballProgress - ballDisplayX) * 0.06;
 
   const bX = blueX + (redX - blueX) * ballDisplayX;
-  const bY = WY + 8 + Math.sin(AF*0.06)*4; // bobs on water surface
+  const bY = WY + 22; // sits on the water
 
-  // Trail arrows showing direction
-  const dir = ballProgress - ballDisplayX;
-  if(Math.abs(dir) > 0.005) {
-    const arrowDir = dir > 0 ? 1 : -1;
-    for(let a=1;a<=3;a++){
-      const ax = bX + arrowDir*a*18;
-      cx.globalAlpha = 0.4 - a*0.1;
-      cx.fillStyle = dir > 0 ? '#4FC3F7' : '#EF9A9A';
-      cx.beginPath();
-      cx.moveTo(ax, bY);
-      cx.lineTo(ax - arrowDir*8, bY-6);
-      cx.lineTo(ax - arrowDir*8, bY+6);
-      cx.closePath(); cx.fill();
-    }
-    cx.globalAlpha = 1;
+  // ── PROGRESS TRACK (like the rope, but a sea lane) ──
+  const trackY = bY;
+  const trackL = blueX + W*0.09;
+  const trackR = redX  - W*0.09;
+
+  // Track background (dark water lane)
+  cx.beginPath();
+  cx.moveTo(trackL, trackY);
+  cx.lineTo(trackR, trackY);
+  cx.strokeStyle = 'rgba(0,0,0,0.35)';
+  cx.lineWidth = 22; cx.lineCap = 'round'; cx.stroke();
+
+  // Blue side fill (how far blue is winning)
+  const midX = (trackL + trackR) / 2;
+  if(bX < midX) {
+    cx.beginPath(); cx.moveTo(trackL, trackY); cx.lineTo(bX, trackY);
+    cx.strokeStyle='rgba(30,136,229,0.7)'; cx.lineWidth=18; cx.stroke();
+  }
+  // Red side fill (how far red is winning)
+  if(bX > midX) {
+    cx.beginPath(); cx.moveTo(bX, trackY); cx.lineTo(trackR, trackY);
+    cx.strokeStyle='rgba(229,57,53,0.7)'; cx.lineWidth=18; cx.stroke();
   }
 
-  // Glow aura (color shifts blue→red based on position)
-  const hue = ballDisplayX * 30 + 200; // blue to warm
-  const aura = cx.createRadialGradient(bX,bY,4,bX,bY,26);
-  aura.addColorStop(0,`hsla(${hue},80%,70%,0.55)`);
-  aura.addColorStop(1,'rgba(0,0,0,0)');
-  cx.beginPath(); cx.arc(bX,bY,26,0,Math.PI*2); cx.fillStyle=aura; cx.fill();
+  // Center line marker
+  cx.beginPath(); cx.moveTo(midX, trackY-14); cx.lineTo(midX, trackY+14);
+  cx.strokeStyle='rgba(255,255,255,0.8)'; cx.lineWidth=3; cx.setLineDash([4,3]); cx.stroke();
+  cx.setLineDash([]);
 
-  // Water ripple under ball
-  cx.beginPath(); cx.ellipse(bX, bY+14, 18, 5, 0,0,Math.PI*2);
-  cx.fillStyle='rgba(0,0,0,0.2)'; cx.fill();
+  // Step markers (10 steps each side)
+  for(let t=1; t<10; t++) {
+    const mx = trackL + (trackR-trackL)*(t/10);
+    const isHalf = t===5;
+    cx.beginPath(); cx.moveTo(mx, trackY-(isHalf?12:7)); cx.lineTo(mx, trackY+(isHalf?12:7));
+    cx.strokeStyle = isHalf ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.4)';
+    cx.lineWidth = isHalf ? 3 : 1.5; cx.stroke();
+  }
 
-  // Ball itself
-  const bG = cx.createRadialGradient(bX-4,bY-4,1,bX,bY,14);
-  bG.addColorStop(0,'#ccc'); bG.addColorStop(0.5,'#666'); bG.addColorStop(1,'#111');
-  cx.beginPath(); cx.arc(bX,bY,14,0,Math.PI*2);
+  // Blue ship danger zone (left 20%)
+  cx.beginPath(); cx.moveTo(trackL, trackY); cx.lineTo(trackL + (trackR-trackL)*0.15, trackY);
+  cx.strokeStyle='rgba(255,50,50,0.3)'; cx.lineWidth=18; cx.stroke();
+  // Red ship danger zone (right 20%)
+  cx.beginPath(); cx.moveTo(trackR - (trackR-trackL)*0.15, trackY); cx.lineTo(trackR, trackY);
+  cx.strokeStyle='rgba(50,50,255,0.3)'; cx.lineWidth=18; cx.stroke();
+
+  // ── THE CANNONBALL ──
+  // Pulsing glow — more intense near a ship
+  const dangerL = 1 - Math.min(1, (ballDisplayX) / 0.25);
+  const dangerR = 1 - Math.min(1, (1-ballDisplayX) / 0.25);
+  const danger  = Math.max(dangerL, dangerR);
+  const glowR   = 20 + danger*16 + Math.sin(AF*0.12)*3;
+  const glowCol = danger > 0.3
+    ? `rgba(255,${Math.floor(200-danger*200)},0,${0.5+danger*0.4})`
+    : `rgba(180,180,100,0.45)`;
+  const aura2 = cx.createRadialGradient(bX, bY, 4, bX, bY, glowR);
+  aura2.addColorStop(0, glowCol); aura2.addColorStop(1,'rgba(0,0,0,0)');
+  cx.beginPath(); cx.arc(bX, bY, glowR, 0, Math.PI*2);
+  cx.fillStyle=aura2; cx.fill();
+
+  // Shadow on water
+  cx.beginPath(); cx.ellipse(bX, bY+16, 15, 5, 0, 0, Math.PI*2);
+  cx.fillStyle='rgba(0,0,0,0.25)'; cx.fill();
+
+  // Ball
+  const bG = cx.createRadialGradient(bX-5, bY-5, 1, bX, bY, 15);
+  bG.addColorStop(0,'#ccc'); bG.addColorStop(0.5,'#555'); bG.addColorStop(1,'#111');
+  cx.beginPath(); cx.arc(bX, bY, 15, 0, Math.PI*2);
   cx.fillStyle=bG; cx.fill();
   cx.strokeStyle='#000'; cx.lineWidth=2; cx.stroke();
   // Shine
-  cx.beginPath(); cx.arc(bX-5,bY-5,5,0,Math.PI*2);
-  cx.fillStyle='rgba(255,255,255,0.45)'; cx.fill();
+  cx.beginPath(); cx.arc(bX-5, bY-5, 5, 0, Math.PI*2);
+  cx.fillStyle='rgba(255,255,255,0.5)'; cx.fill();
 
   // Explosions triggered by server win message
 
