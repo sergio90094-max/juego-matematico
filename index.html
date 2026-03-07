@@ -98,8 +98,8 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 .wstv { font-family:'Fredoka One',cursive; font-size:1.8rem; color:white; }
 #pauseBtn { background:linear-gradient(135deg,#F57F17,#FBC02D); color:white; border:none; padding:11px 22px; border-radius:50px; font-family:'Fredoka One',cursive; font-size:1rem; cursor:pointer; box-shadow:0 5px 18px rgba(245,127,23,.4); transition:transform .2s; margin-right:10px; }
 #pauseBtn:hover { transform:translateY(-2px); }
-#rbtn { background:linear-gradient(135deg,#7B1FA2,#AB47BC); color:white; border:none; padding:11px 26px; border-radius:50px; font-family:'Fredoka One',cursive; font-size:1rem; cursor:pointer; box-shadow:0 5px 18px rgba(123,31,162,.4); transition:transform .2s; }
-#rbtn:hover { transform:translateY(-2px); }
+#rbtn, #win-rbtn { background:linear-gradient(135deg,#7B1FA2,#AB47BC); color:white; border:none; padding:11px 26px; border-radius:50px; font-family:'Fredoka One',cursive; font-size:1rem; cursor:pointer; box-shadow:0 5px 18px rgba(123,31,162,.4); transition:transform .2s; }
+#rbtn:hover, #win-rbtn:hover { transform:translateY(-2px); }
 
 /* ── LOBBY OVERLAY ── */
 #lobby { position:fixed; inset:0; background:rgba(10,20,60,.88); display:flex; align-items:center; justify-content:center; z-index:300; backdrop-filter:blur(6px); transition:opacity .4s; }
@@ -264,7 +264,7 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
       <div class="wst"><div class="wstl">Eq.1 ✓</div><div class="wstv" id="wsb">0</div></div>
       <div class="wst"><div class="wstl">Eq.2 ✓</div><div class="wstv" id="wsr2">0</div></div>
     </div>
-    <button id="rbtn" onclick="ws&&ws.send(JSON.stringify({type:'restart'}))">⚓ Nueva Batalla</button>
+    <button id="win-rbtn" onclick="restartGame();document.getElementById('win').classList.remove('show')">⚓ Nueva Batalla</button>
   </div>
 </div>
 
@@ -1282,7 +1282,6 @@ function startMusic(){
   const ss = document.getElementById('start-screen');
   ss.classList.add('hide');
   setTimeout(() => ss.style.display = 'none', 650);
-  // Iniciar música al arrancar
   if (bgMusic && bgMusic.state === 'suspended') bgMusic.resume();
   playMusic();
 }
