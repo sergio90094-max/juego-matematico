@@ -45,40 +45,93 @@ const clients = new Map(); // ws -> { type }
 ══════════════════════════════════════ */
 function rnd(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
 function genQ() {
-  const type = rnd(0, 4);
-  let a, b, ans, text;
+  const type = rnd(0, 11);
+  let a, b, c, ans, text;
 
   switch (type) {
-    case 0:
-      a = rnd(1,12); b = rnd(1,12);
+
+    // ── FÁCILES ──
+
+    case 0: // Multiplicación básica tablas 1-5
+      a = rnd(1,5); b = rnd(1,10);
       ans = a*b; text = a+' × '+b+' = ?';
       break;
-    case 1:
-      a = rnd(1,12); b = rnd(1,12);
-      const mf = rnd(0,2);
-      if (mf===0){ ans=b; text=a+' × ? = '+(a*b); }
-      else if(mf===1){ ans=a; text='? × '+b+' = '+(a*b); }
-      else { ans=a*b; text=a+' × '+b+' = X'; }
+
+    case 1: // División básica divisor pequeño
+      b = rnd(1,5); ans = rnd(1,10); a = b*ans;
+      text = a+' ÷ '+b+' = ?';
       break;
-    case 2:
-      b=rnd(1,12); ans=rnd(1,12); a=b*ans;
-      text = rnd(0,1)===0 ? a+' ÷ '+b+' = ?' : a+' / '+b+' = ?';
+
+    case 2: // Multiplicación con incógnita fácil
+      a = rnd(1,6); b = rnd(1,6);
+      { const mf = rnd(0,1);
+        if(mf===0){ ans=b; text=a+' × ? = '+(a*b); }
+        else      { ans=a; text='? × '+b+' = '+(a*b); }
+      }
       break;
-    case 3:
-      b=rnd(1,12); const coc=rnd(1,12); a=b*coc;
-      const xf=rnd(0,2);
-      if(xf===0){ ans=a; text='? ÷ '+b+' = '+coc; }
-      else if(xf===1){ ans=b; text=a+' ÷ ? = '+coc; }
-      else { ans=coc; text=a+' ÷ '+b+' = X'; }
+
+    case 3: // Fracciones simples ½ y ¼
+      { const ft = rnd(0,1);
+        if(ft===0){ ans=rnd(1,24); a=ans*2; text='½ de '+a+' = ?'; }
+        else      { ans=rnd(1,12); a=ans*4; text='¼ de '+a+' = ?'; }
+      }
       break;
-    case 4:
-      const ft=rnd(0,5);
-      if(ft===0){ ans=rnd(1,24); a=ans*2; text='½ de '+a+' = ?'; }
-      else if(ft===1){ ans=rnd(1,12); a=ans*3; text='⅓ de '+a+' = ?'; }
-      else if(ft===2){ ans=rnd(1,12); a=ans*4; text='¼ de '+a+' = ?'; }
-      else if(ft===3){ const bs=rnd(1,8); a=bs*4; ans=bs*3; text='¾ de '+a+' = ?'; }
-      else if(ft===4){ const bs2=rnd(1,9); a=bs2*3; ans=bs2*2; text='⅔ de '+a+' = ?'; }
-      else { ans=rnd(1,6); a=ans; text=a+'/2 = ?/4'; ans=a*2; }
+
+    case 4: // Doble y triple
+      { const dt = rnd(0,1);
+        if(dt===0){ a=rnd(2,20); ans=a*2; text='Doble de '+a+' = ?'; }
+        else      { a=rnd(2,15); ans=a*3; text='Triple de '+a+' = ?'; }
+      }
+      break;
+
+    // ── MEDIOS ──
+
+    case 5: // Tablas del 6 al 12
+      a = rnd(6,12); b = rnd(1,12);
+      ans = a*b; text = a+' × '+b+' = ?';
+      break;
+
+    case 6: // División con incógnita media
+      b = rnd(2,10); { const coc=rnd(2,12); a=b*coc;
+        const xf=rnd(0,1);
+        if(xf===0){ ans=coc; text=a+' ÷ '+b+' = ?'; }
+        else      { ans=b;   text=a+' ÷ ? = '+coc; }
+      }
+      break;
+
+    case 7: // Fracciones ⅓ ¾ ⅔
+      { const ft = rnd(0,2);
+        if(ft===0){ ans=rnd(1,12); a=ans*3; text='⅓ de '+a+' = ?'; }
+        else if(ft===1){ const bs=rnd(1,8); a=bs*4; ans=bs*3; text='¾ de '+a+' = ?'; }
+        else { const bs2=rnd(1,9); a=bs2*3; ans=bs2*2; text='⅔ de '+a+' = ?'; }
+      }
+      break;
+
+    case 8: // Multiplicación de 3 factores
+      a = rnd(2,5); b = rnd(2,5); c = rnd(2,4);
+      ans = a*b*c; text = a+' × '+b+' × '+c+' = ?';
+      break;
+
+    // ── DIFÍCILES ──
+
+    case 9: // Potencias cuadradas
+      a = rnd(2,12);
+      ans = a*a; text = a+'² = ?';
+      break;
+
+    case 10: // Raíz cuadrada perfecta
+      { a = rnd(1,12); ans = a;
+        text = '√'+(a*a)+' = ?';
+      }
+      break;
+
+    case 11: // Porcentajes usando multiplicación
+      { const pcts = [10,20,25,50];
+        const pct = pcts[rnd(0,3)];
+        a = rnd(1,20)*10;
+        ans = Math.round(a*pct/100);
+        text = pct+'% de '+a+' = ?';
+      }
       break;
   }
   return { text, answer: Math.round(ans) };
@@ -148,6 +201,7 @@ function startTimer() {
 
 function nextQ() {
   if (G.over) return;
+  wrongThisQ = new Set();
   const q  = genQ();
   G.ans    = q.answer;
   G.qtext  = q.text;
@@ -162,6 +216,7 @@ function nextQ() {
    LÓGICA DE RESPUESTA
 ══════════════════════════════════════ */
 const MA = 5, WT = 50;
+let wrongThisQ = new Set(); // quién ya falló en la pregunta actual
 
 function handleSubmit(team) {
   if (G.over) return;
@@ -169,12 +224,12 @@ function handleSubmit(team) {
   if (!buf) return;
   const val = parseInt(buf, 10);
 
-  // limpiar buffer
   if (team === 'b') G.ib = ''; else G.ir = '';
   broadcastAll({ type: 'clearInput', team });
 
   if (val === G.ans) {
     clearInterval(timerInterval);
+    wrongThisQ = new Set();
     if (team === 'b') { G.sb++; G.cb++; G.pos -= MA; }
     else              { G.sr++; G.cr++; G.pos += MA; }
 
@@ -188,6 +243,14 @@ function handleSubmit(team) {
     }
   } else {
     broadcastAll({ type: 'wrong', team });
+    wrongThisQ.add(team);
+    // Si los DOS equipos fallaron en esta pregunta → pasar a la siguiente
+    if (wrongThisQ.has('b') && wrongThisQ.has('r')) {
+      wrongThisQ = new Set();
+      clearInterval(timerInterval);
+      broadcastAll({ type: 'bothWrong' });
+      setTimeout(() => nextQ(), 1200);
+    }
   }
 }
 
@@ -315,6 +378,16 @@ wss.on('connection', (ws) => {
     if (info) {
       console.log(`[-] Desconectado: ${info.type}`);
       broadcastAll({ type: 'playerLeft', role: info.type });
+      // Si el profesor (pantalla) se desconecta, pausar y reiniciar el juego
+      if (info.type === 'screen') {
+        clearInterval(timerInterval);
+        G = freshState();
+        gameStarted = false;
+        gamePaused = false;
+        // Notificar a los jugadores que la sesión terminó
+        setTimeout(() => broadcastAll({ type: 'hostLeft' }), 300);
+        console.log('[*] Profesor desconectado — juego reiniciado');
+      }
     }
     clients.delete(ws);
     // Si no quedan clientes, reiniciar estado

@@ -396,6 +396,12 @@ function handleMsg(msg) {
       }, 1300);
       break;
 
+    case 'bothWrong':
+      setFb('b','💀 ¡Los dos fallaron!','w');
+      setFb('r','💀 ¡Los dos fallaron!','w');
+      setTimeout(clrFb, 1100);
+      break;
+
     case 'win': {
       G.over = true;
       sWin();
@@ -742,7 +748,7 @@ function fireCannonball(redScored) {
   ballAnim.y = startY;
   const targetProgress = redScored
     ? Math.max(0, ballProgress - 0.18)   // ball moves toward blue
-    : Math.min(1, ballProgress + 0.18);  // ball moves toward red
+    : Math.min(1, ballProgress + 0.10);  // ball moves toward red
   const targetX = blueX + (redX-blueX)*targetProgress;
   const targetY = WY - H*0.08;
   const frames = 38;
