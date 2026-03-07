@@ -258,7 +258,7 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
     <span id="wemoji">💥</span>
     <div id="wtitle">¡VICTORIA!</div>
     <div id="wsub">¡Equipo 1 Gana!</div>
-    <div id="wmsg">¡Hundieron el barco enemigo! 🏴‍☠️</div>
+    <div id="wmsg">¡Hundieron el barco enemigo! ☠️</div>
     <div id="wstats">
       <div class="wst"><div class="wstl">Rondas</div><div class="wstv" id="wsr">0</div></div>
       <div class="wst"><div class="wstl">Eq.1 ✓</div><div class="wstv" id="wsb">0</div></div>
@@ -350,24 +350,26 @@ function handleMsg(msg) {
       setTimeout(clrFb, 900);
       break;
 
-    case 'nextQ':
+    case 'nextQ': {
       G.rnd = msg.rnd;
-      const el = document.getElementById('qt');
-      el.classList.add('fade');
+      const qtEl = document.getElementById('qt');
+      qtEl.classList.add('fade');
       setTimeout(() => {
-        el.textContent = msg.qtext;
+        qtEl.textContent = msg.qtext;
         document.getElementById('rn').textContent = msg.rnd;
-        el.classList.remove('fade');
+        qtEl.classList.remove('fade');
       }, 200);
       document.getElementById('db').textContent = '?';
       document.getElementById('dr').textContent = '?';
       clrFb();
       break;
+    }
 
-    case 'input':
+    case 'input': {
       const disp = msg.team==='b' ? 'db' : 'dr';
       document.getElementById(disp).textContent = msg.value || '?';
       break;
+    }
 
     case 'clearInput':
       document.getElementById(msg.team==='b'?'db':'dr').textContent = '?';
@@ -394,62 +396,45 @@ function handleMsg(msg) {
       }, 1300);
       break;
 
-    case 'win':
+    case 'win': {
       G.over = true;
       sWin();
       const ib = msg.team==='b';
       const winColor1 = ib ? '#0D47A1' : '#B71C1C';
       const winColor2 = ib ? '#1565C0' : '#C62828';
       const winColor3 = ib ? '#42A5F5' : '#EF5350';
-      // Set win screen gradient background
       const winEl = document.getElementById('win');
       winEl.style.background = `radial-gradient(ellipse at center, ${winColor3} 0%, ${winColor2} 40%, ${winColor1} 100%)`;
       document.getElementById('wemoji').textContent = ib ? '🔵' : '🔴';
       document.getElementById('wtitle').textContent = '¡VICTORIA!';
       document.getElementById('wtitle').style.color = 'white';
       document.getElementById('wsub').textContent   = ib ? '¡Equipo Azul Gana!' : '¡Equipo Rojo Gana!';
-      document.getElementById('wmsg').textContent   = ib ? '¡Los piratas azules hundieron el barco rojo! 🏴‍☠️💥' : '¡Los piratas rojos hundieron el barco azul! 🏴‍☠️💥';
+      document.getElementById('wmsg').textContent   = ib ? '¡Los piratas azules hundieron el barco rojo! ☠️💥' : '¡Los piratas rojos hundieron el barco azul! ☠️💥';
       document.getElementById('wsr').textContent  = msg.rnd;
       document.getElementById('wsb').textContent  = msg.cb;
       document.getElementById('wsr2').textContent = msg.cr;
-      // Launch win screen particle explosion
-      setTimeout(()=>{
-        winEl.classList.add('show');
-        startWinExplosion(winColor3);
-      }, 100);
+      setTimeout(()=>{ winEl.classList.add('show'); startWinExplosion(winColor3); }, 100);
       break;
+    }
 
 
 
-    case 'playerJoined':
-      if (msg.role === 'blue') {
-        blueReady = true;
-        const cb = document.getElementById('conn-b');
-        if(cb){ cb.textContent='✅ Conectado'; cb.className='conn-badge online'; }
-      }
-      if (msg.role === 'red') {
-        redReady = true;
-        const cr = document.getElementById('conn-r');
-        if(cr){ cr.textContent='✅ Conectado'; cr.className='conn-badge online'; }
-      }
+    case 'playerJoined': {
+      const connEl = document.getElementById(msg.role==='blue'?'conn-b':'conn-r');
+      if(msg.role==='blue') blueReady=true; else redReady=true;
+      if(connEl){ connEl.textContent='✅ Conectado'; connEl.className='conn-badge online'; }
       updateLobby();
       break;
-
-    case 'playerLeft':
-      if (msg.role === 'blue') {
-        blueReady = false;
-        const cb2 = document.getElementById('conn-b');
-        if(cb2){ cb2.textContent='📱 Sin conectar'; cb2.className='conn-badge offline'; }
-      }
-      if (msg.role === 'red') {
-        redReady = false;
-        const cr2 = document.getElementById('conn-r');
-        if(cr2){ cr2.textContent='📱 Sin conectar'; cr2.className='conn-badge offline'; }
-      }
+    }
+    case 'playerLeft': {
+      const connEl2 = document.getElementById(msg.role==='blue'?'conn-b':'conn-r');
+      if(msg.role==='blue') blueReady=false; else redReady=false;
+      if(connEl2){ connEl2.textContent='📱 Sin conectar'; connEl2.className='conn-badge offline'; }
       updateLobby();
       break;
+    }
 
-    case 'pause':
+    case 'pause': {
       const pb = document.getElementById('pauseBtn');
       if (msg.paused) {
         pb.textContent = '▶ Reanudar';
@@ -459,6 +444,7 @@ function handleMsg(msg) {
         pb.style.background = 'linear-gradient(135deg,#F57F17,#FBC02D)';
       }
       break;
+    }
 
     case 'waiting':
       document.getElementById('lobby').classList.remove('hidden');
@@ -466,25 +452,21 @@ function handleMsg(msg) {
       updateLobby();
       break;
 
-    case 'restart':
+    case 'restart': {
       initBall();
       document.getElementById('win').classList.remove('show');
       document.getElementById('sb').textContent='0';
       document.getElementById('sr').textContent='0';
       document.getElementById('db').textContent='?';
       document.getElementById('dr').textContent='?';
-      document.getElementById('pb').style.width='0%';
-      document.getElementById('pr').style.width='0%';
       G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'' };
+      smoothPos = 0;
       const qel = document.getElementById('qt');
       qel.classList.add('fade');
       setTimeout(()=>{ qel.textContent=msg.qtext; qel.classList.remove('fade'); },200);
       clrFb();
       break;
-
-    
-
-    
+    }
   }
 }
 
@@ -517,13 +499,8 @@ function updateTimerUI(v) {
 }
 
 function updateRope(pos) {
-  const p = pos / 50;
-  document.getElementById('pb').style.width = (Math.max(0,-p)*50)+'%';
-  document.getElementById('pr').style.width = (Math.max(0, p)*50)+'%';
-  const kd  = document.getElementById('knot-dot');
-  const W   = document.getElementById('arena').clientWidth;
-  const knotX = W*(0.5 + p*0.3);
-  kd.style.left = knotX+'px';
+  // Ships and ball position handled by canvas — just update G.pos
+  G.pos = pos;
 }
 
 function setFb(t,msg,cls) { const e=document.getElementById('fb'+t); e.textContent=msg; e.className='fb'+(cls?' '+cls:''); }
@@ -1139,7 +1116,7 @@ function drawScene() {
       return true;
     });
     return ex.pts.length>0;
-  }
+  });
 }
 
 // ── WIN SCREEN EXPLOSION ──
