@@ -419,7 +419,10 @@ function handleMsg(msg) {
       document.getElementById('wsr').textContent  = msg.rnd;
       document.getElementById('wsb').textContent  = msg.cb;
       document.getElementById('wsr2').textContent = msg.cr;
-      setTimeout(()=>{ winEl.classList.add('show'); startWinExplosion(winColor3); }, 100);
+      // Explosion on the losing ship first, then fullscreen victory
+      const loseX = ib ? W*0.78 : W*0.22;
+      for(let i=0;i<4;i++) setTimeout(()=>spawnExplosion(loseX+rndF(-40,40), cnv.height*0.55+rndF(-30,30)), i*150);
+      setTimeout(()=>{ winEl.classList.add('show'); startWinExplosion(winColor3); }, 600);
       break;
     }
 
@@ -727,9 +730,8 @@ function fireCannonball(redScored) {
   // Fire cannon smoke from the scoring team's ship
   const W=cnv.width, H=cnv.height;
   const WY = H*0.68;
-  const prog = smoothPos/50;
-  const blueX = W*(0.22 - prog*0.20);
-  const redX  = W*(0.78 - prog*0.20);
+  const blueX = W*0.22;
+  const redX  = W*0.78;
   if (!redScored) {
     // Blue scored — smoke from blue cannon
     const sx = blueX + W*0.10, sy = WY - H*0.14;
@@ -970,9 +972,8 @@ function drawScene() {
   shipBob = Math.sin(AF*0.035)*4;
 
   // Smooth position transition
-  smoothPos += (G.pos - smoothPos) * 0.08;
-
-  const prog = smoothPos / 50; // -1 to 1
+  // Ships are FIXED — only the ball moves
+  const prog = 0;
 
   // ── SKY gradient ──
   const skyG = cx.createLinearGradient(0,0,0,WY);
@@ -1016,8 +1017,8 @@ function drawScene() {
   cx.setLineDash([]);
 
   // ── SHIP POSITIONS ──
-  const blueX = W*(0.22 - prog*0.20);
-  const redX  = W*(0.78 - prog*0.20);
+  const blueX = W*0.22;
+  const redX  = W*0.78;
 
   // Draw ships
   drawShip(blueX, WY, '#1565C0','#0D47A1',  1,  shipBob);
@@ -1079,17 +1080,7 @@ function drawScene() {
   cx.beginPath(); cx.arc(bX-5,bY-5,5,0,Math.PI*2);
   cx.fillStyle='rgba(255,255,255,0.45)'; cx.fill();
 
-  // Check win condition visually (explosion when ball reaches a ship)
-  if(ballProgress <= 0.01 && Math.abs(ballDisplayX - ballProgress) < 0.02) {
-    spawnExplosion(blueX, WY-H*0.15);
-    spawnExplosion(blueX+W*0.05, WY-H*0.25);
-    ballProgress = 0.5; ballDisplayX = 0.5;
-  }
-  if(ballProgress >= 0.99 && Math.abs(ballDisplayX - ballProgress) < 0.02) {
-    spawnExplosion(redX, WY-H*0.15);
-    spawnExplosion(redX-W*0.05, WY-H*0.25);
-    ballProgress = 0.5; ballDisplayX = 0.5;
-  }
+  // Explosions triggered by server win message
 
   // ── EXPLOSIONS ──
   explosions = explosions.filter(ex=>{
