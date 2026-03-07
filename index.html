@@ -694,13 +694,12 @@ function figure(x,y,dir,s,p,h,f,sc) {
 }
 
 // ── SHIP BATTLE STATE ──
-// ONE cannonball — floats between ships
-// Blue scores → ball moves right toward red ship
-// Red scores  → ball moves left toward blue ship
-// Ball reaches a ship → MASSIVE explosion → victory
-let ball = { x:0.5, y:0, visible:false }; // x = 0..1 normalized progress
-let ballAnim = { x:0, y:0, vx:0, vy:0, flying:false }; // pixel animation
-let ballProgress = 0.5; // 0=at blue ship, 1=at red ship
+// ONE cannonball — floats on the water between ships
+// Starts at center (0.5). Each correct answer moves it 0.10 toward enemy.
+// If it reaches 0 → blue ship explodes. If 1 → red ship explodes.
+// ballProgress: 0=blue side, 1=red side
+let ballProgress = 0.5;     // current position (target)
+let ballDisplayX  = 0.5;    // smoothly animated display position
 let explosions = [];
 let cannonSmoke = [];
 let shipBob = 0;
@@ -710,54 +709,36 @@ let ballInitialized = false;
 function rndF(a,b){ return Math.random()*(b-a)+a; }
 
 function initBall() {
-  // Place ball in center at start
-  ballProgress = 0.5;
+  ballProgress   = 0.5;
+  ballDisplayX   = 0.5;
   ballInitialized = true;
-  ballAnim.flying = false;
 }
 
 function fireCannonball(redScored) {
-  // redScored=true  → red scored → ball goes LEFT (toward blue)
-  // redScored=false → blue scored → ball goes RIGHT (toward red)
+  // Move ball toward the enemy of whoever scored
+  // redScored=true  → red scored → ball moves LEFT toward blue  (progress decreases)
+  // redScored=false → blue scored → ball moves RIGHT toward red (progress increases)
+  const step = 0.10; // 10 steps to win (WT=50, MA=5 → 10 correct answers)
+  if (redScored) {
+    ballProgress = Math.max(0, ballProgress - step);
+  } else {
+    ballProgress = Math.min(1, ballProgress + step);
+  }
+  // Fire cannon smoke from the scoring team's ship
   const W=cnv.width, H=cnv.height;
   const WY = H*0.68;
   const prog = smoothPos/50;
   const blueX = W*(0.22 - prog*0.20);
   const redX  = W*(0.78 - prog*0.20);
-
-  // Figure out where ball currently is
-  const curX = blueX + (redX-blueX)*ballProgress;
-  const curY = WY - H*0.08;
-
-  // Cannon that fires
-  let startX, startY;
-  if(!redScored) {
-    // Blue fires from its cannon (right side of blue ship)
-    startX = blueX + W*0.10;
-    startY = WY - H*0.14;
-    for(let i=0;i<14;i++) cannonSmoke.push({x:startX,y:startY,r:rndF(5,15),a:0.9,vx:rndF(0.5,3),vy:rndF(-3,-0.5)});
+  if (!redScored) {
+    // Blue scored — smoke from blue cannon
+    const sx = blueX + W*0.10, sy = WY - H*0.14;
+    for(let i=0;i<14;i++) cannonSmoke.push({x:sx,y:sy,r:rndF(5,15),a:0.9,vx:rndF(0.5,3),vy:rndF(-3,-0.5)});
   } else {
-    // Red fires from its cannon (left side of red ship)
-    startX = redX - W*0.10;
-    startY = WY - H*0.14;
-    for(let i=0;i<14;i++) cannonSmoke.push({x:startX,y:startY,r:rndF(5,15),a:0.9,vx:rndF(-3,-0.5),vy:rndF(-3,-0.5)});
+    // Red scored — smoke from red cannon
+    const sx = redX - W*0.10, sy = WY - H*0.14;
+    for(let i=0;i<14;i++) cannonSmoke.push({x:sx,y:sy,r:rndF(5,15),a:0.9,vx:rndF(-3,-0.5),vy:rndF(-3,-0.5)});
   }
-
-  // Ball arcs from cannon to new position
-  ballAnim.x = startX;
-  ballAnim.y = startY;
-  const targetProgress = redScored
-    ? Math.max(0, ballProgress - 0.18)   // ball moves toward blue
-    : Math.min(1, ballProgress + 0.10);  // ball moves toward red
-  const targetX = blueX + (redX-blueX)*targetProgress;
-  const targetY = WY - H*0.08;
-  const frames = 38;
-  ballAnim.vx = (targetX - startX) / frames;
-  ballAnim.vy = (targetY - startY) / frames - 4;
-  ballAnim.flying = true;
-  ballAnim.targetProgress = targetProgress;
-  ballAnim.frames = frames;
-  ballAnim.frame = 0;
 }
 
 function spawnExplosion(x, y) {
@@ -1051,63 +1032,63 @@ function drawScene() {
     return true;
   });
 
-  // ── SINGLE CANNONBALL ──
+  // ── SINGLE CANNONBALL — slides smoothly on water ──
   if(!ballInitialized) initBall();
 
-  // Update flying animation
-  if(ballAnim.flying) {
-    ballAnim.vy += 0.25; // gravity arc
-    ballAnim.x += ballAnim.vx;
-    ballAnim.y += ballAnim.vy;
-    ballAnim.frame++;
-    cannonSmoke.push({x:ballAnim.x,y:ballAnim.y,r:rndF(2,6),a:0.35,vx:rndF(-0.3,0.3),vy:rndF(-0.5,0)});
-    if(ballAnim.frame >= ballAnim.frames) {
-      ballProgress = ballAnim.targetProgress;
-      ballAnim.flying = false;
-      // Check if reached a ship
-      if(ballProgress <= 0.02) {
-        spawnExplosion(blueX, WY-H*0.15);
-        spawnExplosion(blueX+W*0.06, WY-H*0.22);
-      }
-      if(ballProgress >= 0.98) {
-        spawnExplosion(redX, WY-H*0.15);
-        spawnExplosion(redX-W*0.06, WY-H*0.22);
-      }
+  // Smooth slide toward target
+  ballDisplayX += (ballProgress - ballDisplayX) * 0.07;
+
+  const bX = blueX + (redX - blueX) * ballDisplayX;
+  const bY = WY + 8 + Math.sin(AF*0.06)*4; // bobs on water surface
+
+  // Trail arrows showing direction
+  const dir = ballProgress - ballDisplayX;
+  if(Math.abs(dir) > 0.005) {
+    const arrowDir = dir > 0 ? 1 : -1;
+    for(let a=1;a<=3;a++){
+      const ax = bX + arrowDir*a*18;
+      cx.globalAlpha = 0.4 - a*0.1;
+      cx.fillStyle = dir > 0 ? '#4FC3F7' : '#EF9A9A';
+      cx.beginPath();
+      cx.moveTo(ax, bY);
+      cx.lineTo(ax - arrowDir*8, bY-6);
+      cx.lineTo(ax - arrowDir*8, bY+6);
+      cx.closePath(); cx.fill();
     }
+    cx.globalAlpha = 1;
   }
 
-  // Draw resting ball (between ships when not flying)
-  if(!ballAnim.flying) {
-    const bRestX = blueX + (redX-blueX)*ballProgress;
-    const bRestY = WY - H*0.08 + Math.sin(AF*0.06)*4;
-    // Glow aura
-    const aura = cx.createRadialGradient(bRestX,bRestY,4,bRestX,bRestY,22);
-    aura.addColorStop(0,'rgba(200,200,100,0.6)'); aura.addColorStop(1,'rgba(0,0,0,0)');
-    cx.beginPath(); cx.arc(bRestX,bRestY,22,0,Math.PI*2); cx.fillStyle=aura; cx.fill();
-    // Shadow
-    cx.beginPath(); cx.ellipse(bRestX,bRestY+11,12,4,0,0,Math.PI*2);
-    cx.fillStyle='rgba(0,0,0,0.3)'; cx.fill();
-    // Ball
-    const bG = cx.createRadialGradient(bRestX-4,bRestY-4,1,bRestX,bRestY,13);
-    bG.addColorStop(0,'#bbb'); bG.addColorStop(1,'#111');
-    cx.beginPath(); cx.arc(bRestX,bRestY,13,0,Math.PI*2);
-    cx.fillStyle=bG; cx.fill();
-    cx.strokeStyle='#000'; cx.lineWidth=2; cx.stroke();
-    // Shine
-    cx.beginPath(); cx.arc(bRestX-4,bRestY-4,4,0,Math.PI*2);
-    cx.fillStyle='rgba(255,255,255,0.4)'; cx.fill();
-  } else {
-    // Flying ball
-    for(let t=1;t<=6;t++){
-      cx.beginPath();
-      cx.arc(ballAnim.x-ballAnim.vx*t*1.2, ballAnim.y-ballAnim.vy*t*0.6, Math.max(1,12-t*2),0,Math.PI*2);
-      cx.fillStyle=`rgba(80,80,80,${0.3-t*0.04})`; cx.fill();
-    }
-    const bG2=cx.createRadialGradient(ballAnim.x-3,ballAnim.y-3,1,ballAnim.x,ballAnim.y,12);
-    bG2.addColorStop(0,'#bbb'); bG2.addColorStop(1,'#111');
-    cx.beginPath(); cx.arc(ballAnim.x,ballAnim.y,12,0,Math.PI*2);
-    cx.fillStyle=bG2; cx.fill();
-    cx.strokeStyle='#000'; cx.lineWidth=2; cx.stroke();
+  // Glow aura (color shifts blue→red based on position)
+  const hue = ballDisplayX * 30 + 200; // blue to warm
+  const aura = cx.createRadialGradient(bX,bY,4,bX,bY,26);
+  aura.addColorStop(0,`hsla(${hue},80%,70%,0.55)`);
+  aura.addColorStop(1,'rgba(0,0,0,0)');
+  cx.beginPath(); cx.arc(bX,bY,26,0,Math.PI*2); cx.fillStyle=aura; cx.fill();
+
+  // Water ripple under ball
+  cx.beginPath(); cx.ellipse(bX, bY+14, 18, 5, 0,0,Math.PI*2);
+  cx.fillStyle='rgba(0,0,0,0.2)'; cx.fill();
+
+  // Ball itself
+  const bG = cx.createRadialGradient(bX-4,bY-4,1,bX,bY,14);
+  bG.addColorStop(0,'#ccc'); bG.addColorStop(0.5,'#666'); bG.addColorStop(1,'#111');
+  cx.beginPath(); cx.arc(bX,bY,14,0,Math.PI*2);
+  cx.fillStyle=bG; cx.fill();
+  cx.strokeStyle='#000'; cx.lineWidth=2; cx.stroke();
+  // Shine
+  cx.beginPath(); cx.arc(bX-5,bY-5,5,0,Math.PI*2);
+  cx.fillStyle='rgba(255,255,255,0.45)'; cx.fill();
+
+  // Check win condition visually (explosion when ball reaches a ship)
+  if(ballProgress <= 0.01 && Math.abs(ballDisplayX - ballProgress) < 0.02) {
+    spawnExplosion(blueX, WY-H*0.15);
+    spawnExplosion(blueX+W*0.05, WY-H*0.25);
+    ballProgress = 0.5; ballDisplayX = 0.5;
+  }
+  if(ballProgress >= 0.99 && Math.abs(ballDisplayX - ballProgress) < 0.02) {
+    spawnExplosion(redX, WY-H*0.15);
+    spawnExplosion(redX-W*0.05, WY-H*0.25);
+    ballProgress = 0.5; ballDisplayX = 0.5;
   }
 
   // ── EXPLOSIONS ──
