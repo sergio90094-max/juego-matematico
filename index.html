@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Guerra Matemática — Pantalla Principal</title>
+<title>🦜 El Tesoro Matemático</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap');
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -72,27 +72,30 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 #ql { font-size:.68rem; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:3px; }
 #qt { font-family:'Fredoka One',cursive; font-size:clamp(1.8rem,4.5vw,3rem); color:var(--text); transition:opacity .18s,transform .18s; }
 #qt.fade { opacity:0; transform:scale(.92); }
-#arena { flex:1; background:var(--card); border-radius:13px; border:2px solid var(--border); box-shadow:0 2px 8px rgba(0,0,0,.07); position:relative; overflow:hidden; min-height:0; min-width:0; }
+#arena { flex:1; background:linear-gradient(180deg,#87CEEB 0%,#B0E2FF 55%,#1a6fa8 55%,#0d4f7a 100%); border-radius:13px; border:2px solid var(--border); box-shadow:0 2px 8px rgba(0,0,0,.07); position:relative; overflow:hidden; min-height:0; min-width:0; }
 #cnv { position:absolute; top:0; left:0; width:100%; height:100%; display:block; }
 #knot-shell { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; }
-#knot-dot { position:absolute; width:26px; height:26px; border-radius:50%; background:radial-gradient(circle at 35% 30%,#888,#222); border:2px solid #111; box-shadow:0 0 10px rgba(0,0,0,.5),0 3px 8px rgba(0,0,0,.4); transform:translate(-50%,-50%); transition:left .7s cubic-bezier(.34,1.56,.64,1),top .0s; }
+#knot-dot { display:none; }
 #prog { position:absolute; bottom:0; left:0; right:0; height:8px; }
 #pb { position:absolute; top:0; bottom:0; left:0; background:var(--bluel); border-radius:0 0 0 11px; transition:width .7s cubic-bezier(.34,1.56,.64,1); }
 #pr { position:absolute; top:0; bottom:0; right:0; background:var(--redl); border-radius:0 0 11px 0; transition:width .7s cubic-bezier(.34,1.56,.64,1); }
 #pm { position:absolute; top:0; bottom:0; left:50%; transform:translateX(-50%); width:3px; background:#bbb; }
 
 /* ── WIN OVERLAY ── */
-#win { position:fixed; inset:0; background:rgba(0,0,0,.72); display:flex; align-items:center; justify-content:center; z-index:200; opacity:0; pointer-events:none; transition:opacity .4s; backdrop-filter:blur(4px); }
+#win { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; z-index:999; opacity:0; pointer-events:none; transition:opacity .3s; overflow:hidden; }
 #win.show { opacity:1; pointer-events:all; }
-#wcard { background:white; border-radius:22px; padding:30px 38px; text-align:center; max-width:380px; width:90%; box-shadow:0 20px 60px rgba(0,0,0,.4); transform:scale(.85); transition:transform .5s cubic-bezier(.34,1.56,.64,1); }
-#win.show #wcard { transform:scale(1); }
-#wemoji { font-size:2.8rem; display:block; margin-bottom:5px; }
-#wtitle { font-family:'Fredoka One',cursive; font-size:clamp(1.5rem,4vw,2.3rem); margin-bottom:3px; }
-#wsub   { color:var(--muted); font-size:.88rem; font-weight:800; margin-bottom:16px; }
-#wstats { display:flex; gap:10px; justify-content:center; margin-bottom:18px; }
-.wst { background:#F5F5F5; border-radius:9px; padding:7px 12px; display:flex; flex-direction:column; align-items:center; }
-.wstl { font-size:.6rem; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:var(--muted); }
-.wstv { font-family:'Fredoka One',cursive; font-size:1.4rem; }
+#win-bg { position:absolute; inset:0; }
+#win-canvas { position:absolute; inset:0; width:100%; height:100%; }
+#wcard { position:relative; z-index:2; text-align:center; padding:40px 50px; }
+#wemoji { font-size:5rem; display:block; margin-bottom:10px; animation:wbounce 0.6s ease infinite alternate; }
+@keyframes wbounce { from{transform:scale(1) rotate(-5deg)} to{transform:scale(1.15) rotate(5deg)} }
+#wtitle { font-family:'Fredoka One',cursive; font-size:clamp(2.5rem,8vw,5.5rem); margin-bottom:8px; text-shadow:0 4px 30px rgba(0,0,0,0.5), 0 0 60px rgba(255,255,255,0.3); color:white; letter-spacing:2px; }
+#wsub   { font-family:'Fredoka One',cursive; font-size:clamp(1.2rem,3vw,2rem); font-weight:800; margin-bottom:24px; color:rgba(255,255,255,0.9); text-shadow:0 2px 10px rgba(0,0,0,0.4); }
+#wmsg   { font-family:'Fredoka One',cursive; font-size:clamp(1rem,2.5vw,1.5rem); color:rgba(255,255,255,0.85); margin-bottom:30px; padding:12px 24px; background:rgba(0,0,0,0.3); border-radius:50px; display:inline-block; }
+#wstats { display:flex; gap:16px; justify-content:center; margin-bottom:30px; }
+.wst { background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); border:2px solid rgba(255,255,255,0.3); border-radius:14px; padding:12px 20px; display:flex; flex-direction:column; align-items:center; }
+.wstl { font-size:.65rem; font-weight:900; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.7); }
+.wstv { font-family:'Fredoka One',cursive; font-size:1.8rem; color:white; }
 #pauseBtn { background:linear-gradient(135deg,#F57F17,#FBC02D); color:white; border:none; padding:11px 22px; border-radius:50px; font-family:'Fredoka One',cursive; font-size:1rem; cursor:pointer; box-shadow:0 5px 18px rgba(245,127,23,.4); transition:transform .2s; margin-right:10px; }
 #pauseBtn:hover { transform:translateY(-2px); }
 #rbtn { background:linear-gradient(135deg,#7B1FA2,#AB47BC); color:white; border:none; padding:11px 26px; border-radius:50px; font-family:'Fredoka One',cursive; font-size:1rem; cursor:pointer; box-shadow:0 5px 18px rgba(123,31,162,.4); transition:transform .2s; }
@@ -148,7 +151,7 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 <div id="start-screen">
   <div id="start-card">
     <span id="start-emoji">🏆</span>
-    <div id="start-title">Guerra<br>Matemática</div>
+    <div id="start-title">🦜 El Tesoro<br>Matemático</div>
     <div id="start-sub">4° y 5° Primaria — Multiplicación, División y Fracciones</div>
     <div class="teams-row">
       <div class="team-badge">🔵 Equipo 1</div>
@@ -250,16 +253,18 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 </div>
 
 <div id="win">
+  <canvas id="win-canvas"></canvas>
   <div id="wcard">
-    <span id="wemoji">🏆</span>
-    <div id="wtitle">¡Equipo 1 Gana!</div>
-    <div id="wsub">¡Dominaron el Tira y Afloja!</div>
+    <span id="wemoji">💥</span>
+    <div id="wtitle">¡VICTORIA!</div>
+    <div id="wsub">¡Equipo 1 Gana!</div>
+    <div id="wmsg">¡Hundieron el barco enemigo! 🏴‍☠️</div>
     <div id="wstats">
       <div class="wst"><div class="wstl">Rondas</div><div class="wstv" id="wsr">0</div></div>
-      <div class="wst"><div class="wstl">Eq.1 ✓</div><div class="wstv" id="wsb" style="color:var(--blue)">0</div></div>
-      <div class="wst"><div class="wstl">Eq.2 ✓</div><div class="wstv" id="wsr2" style="color:var(--red)">0</div></div>
+      <div class="wst"><div class="wstl">Eq.1 ✓</div><div class="wstv" id="wsb">0</div></div>
+      <div class="wst"><div class="wstl">Eq.2 ✓</div><div class="wstv" id="wsr2">0</div></div>
     </div>
-    
+    <button id="rbtn" onclick="ws&&ws.send(JSON.stringify({type:'restart'}))">⚓ Nueva Batalla</button>
   </div>
 </div>
 
@@ -369,6 +374,7 @@ function handleMsg(msg) {
       break;
 
     case 'correct':
+      fireCannonball(msg.team === 'r');
       sOk();
       setFb(msg.team,'✅ ¡Correcto!','ok');
       document.getElementById('sb').textContent = msg.sb;
@@ -391,16 +397,26 @@ function handleMsg(msg) {
     case 'win':
       G.over = true;
       sWin();
-      confetti(msg.team==='b'?'#1E88E5':'#E53935');
       const ib = msg.team==='b';
-      document.getElementById('wemoji').textContent = ib?'🥇':'🏆';
-      document.getElementById('wtitle').textContent = ib?'¡Equipo 1 Gana!':'¡Equipo 2 Gana!';
-      document.getElementById('wtitle').style.color  = ib?'var(--blue)':'var(--red)';
-      document.getElementById('wsub').textContent    = ib?'¡El equipo azul dominó!':'¡El equipo rojo dominó!';
+      const winColor1 = ib ? '#0D47A1' : '#B71C1C';
+      const winColor2 = ib ? '#1565C0' : '#C62828';
+      const winColor3 = ib ? '#42A5F5' : '#EF5350';
+      // Set win screen gradient background
+      const winEl = document.getElementById('win');
+      winEl.style.background = `radial-gradient(ellipse at center, ${winColor3} 0%, ${winColor2} 40%, ${winColor1} 100%)`;
+      document.getElementById('wemoji').textContent = ib ? '🔵' : '🔴';
+      document.getElementById('wtitle').textContent = '¡VICTORIA!';
+      document.getElementById('wtitle').style.color = 'white';
+      document.getElementById('wsub').textContent   = ib ? '¡Equipo Azul Gana!' : '¡Equipo Rojo Gana!';
+      document.getElementById('wmsg').textContent   = ib ? '¡Los piratas azules hundieron el barco rojo! 🏴‍☠️💥' : '¡Los piratas rojos hundieron el barco azul! 🏴‍☠️💥';
       document.getElementById('wsr').textContent  = msg.rnd;
       document.getElementById('wsb').textContent  = msg.cb;
       document.getElementById('wsr2').textContent = msg.cr;
-      setTimeout(()=>document.getElementById('win').classList.add('show'),200);
+      // Launch win screen particle explosion
+      setTimeout(()=>{
+        winEl.classList.add('show');
+        startWinExplosion(winColor3);
+      }, 100);
       break;
 
 
@@ -451,6 +467,7 @@ function handleMsg(msg) {
       break;
 
     case 'restart':
+      initBall();
       document.getElementById('win').classList.remove('show');
       document.getElementById('sb').textContent='0';
       document.getElementById('sr').textContent='0';
@@ -693,26 +710,508 @@ function figure(x,y,dir,s,p,h,f,sc) {
   cx.restore();
 }
 
+// ── SHIP BATTLE STATE ──
+// ONE cannonball — floats between ships
+// Blue scores → ball moves right toward red ship
+// Red scores  → ball moves left toward blue ship
+// Ball reaches a ship → MASSIVE explosion → victory
+let ball = { x:0.5, y:0, visible:false }; // x = 0..1 normalized progress
+let ballAnim = { x:0, y:0, vx:0, vy:0, flying:false }; // pixel animation
+let ballProgress = 0.5; // 0=at blue ship, 1=at red ship
+let explosions = [];
+let cannonSmoke = [];
+let shipBob = 0;
+let smoothPos = 0;
+let ballInitialized = false;
+
+function rndF(a,b){ return Math.random()*(b-a)+a; }
+
+function initBall() {
+  // Place ball in center at start
+  ballProgress = 0.5;
+  ballInitialized = true;
+  ballAnim.flying = false;
+}
+
+function fireCannonball(redScored) {
+  // redScored=true  → red scored → ball goes LEFT (toward blue)
+  // redScored=false → blue scored → ball goes RIGHT (toward red)
+  const W=cnv.width, H=cnv.height;
+  const WY = H*0.68;
+  const prog = smoothPos/50;
+  const blueX = W*(0.22 - prog*0.20);
+  const redX  = W*(0.78 - prog*0.20);
+
+  // Figure out where ball currently is
+  const curX = blueX + (redX-blueX)*ballProgress;
+  const curY = WY - H*0.08;
+
+  // Cannon that fires
+  let startX, startY;
+  if(!redScored) {
+    // Blue fires from its cannon (right side of blue ship)
+    startX = blueX + W*0.10;
+    startY = WY - H*0.14;
+    for(let i=0;i<14;i++) cannonSmoke.push({x:startX,y:startY,r:rndF(5,15),a:0.9,vx:rndF(0.5,3),vy:rndF(-3,-0.5)});
+  } else {
+    // Red fires from its cannon (left side of red ship)
+    startX = redX - W*0.10;
+    startY = WY - H*0.14;
+    for(let i=0;i<14;i++) cannonSmoke.push({x:startX,y:startY,r:rndF(5,15),a:0.9,vx:rndF(-3,-0.5),vy:rndF(-3,-0.5)});
+  }
+
+  // Ball arcs from cannon to new position
+  ballAnim.x = startX;
+  ballAnim.y = startY;
+  const targetProgress = redScored
+    ? Math.max(0, ballProgress - 0.18)   // ball moves toward blue
+    : Math.min(1, ballProgress + 0.18);  // ball moves toward red
+  const targetX = blueX + (redX-blueX)*targetProgress;
+  const targetY = WY - H*0.08;
+  const frames = 38;
+  ballAnim.vx = (targetX - startX) / frames;
+  ballAnim.vy = (targetY - startY) / frames - 4;
+  ballAnim.flying = true;
+  ballAnim.targetProgress = targetProgress;
+  ballAnim.frames = frames;
+  ballAnim.frame = 0;
+}
+
+function spawnExplosion(x, y) {
+  const pts = [];
+  for(let i=0;i<80;i++){
+    const ang = Math.random()*Math.PI*2, spd = rndF(3,12);
+    pts.push({x,y,vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd-3,
+      r:rndF(5,16),
+      color:['#FF4500','#FF8C00','#FFD700','#FFF700','#FF6347','#FFF','#FF3300','#FFAA00'][Math.floor(Math.random()*8)],
+      life:1});
+  }
+  for(let i=0;i<22;i++){
+    const ang=Math.random()*Math.PI*2;
+    pts.push({x,y,vx:Math.cos(ang)*rndF(2,7),vy:Math.sin(ang)*rndF(2,5)-4,
+      r:rndF(4,10),color:'#3E2318',life:1});
+  }
+  explosions.push({pts});
+}
+
+// triggerExplosion replaced by spawnExplosion
+
+// ── DRAW SHIP ──
+// dir=1 faces right (blue), dir=-1 faces left (red)
+function drawShip(x, y, color, accent, dir, bob) {
+  const W=cnv.width, H=cnv.height;
+  const SW = W * 0.22;   // ship half-width
+  const SH = H * 0.32;   // ship height reference
+
+  cx.save(); cx.translate(x, y + bob);
+
+  // ── MAST & RIGGING (behind sail) ──
+  const mastX = -dir * SW*0.05;
+  cx.beginPath(); cx.moveTo(mastX, -SH*0.08); cx.lineTo(mastX, -SH*1.05);
+  cx.strokeStyle='#4A2800'; cx.lineWidth=6; cx.stroke();
+  // Crow's nest
+  cx.beginPath(); cx.rect(mastX-10, -SH*1.02, 20, 12);
+  cx.fillStyle='#5C3010'; cx.fill();
+  cx.strokeStyle='#3E2000'; cx.lineWidth=1.5; cx.stroke();
+
+  // Rigging ropes
+  cx.strokeStyle='rgba(80,50,10,0.5)'; cx.lineWidth=1.5;
+  cx.beginPath(); cx.moveTo(mastX,-SH*0.95); cx.lineTo(dir*SW*0.45,-SH*0.05); cx.stroke();
+  cx.beginPath(); cx.moveTo(mastX,-SH*0.6); cx.lineTo(dir*SW*0.45,-SH*0.05); cx.stroke();
+
+  // ── SAIL ──
+  const sailBulge = Math.sin(AF*0.03)*8;
+  cx.beginPath();
+  cx.moveTo(mastX, -SH*0.98);
+  cx.bezierCurveTo(
+    mastX + dir*(SW*0.55+sailBulge), -SH*0.88,
+    mastX + dir*(SW*0.55+sailBulge), -SH*0.38,
+    mastX, -SH*0.28
+  );
+  cx.closePath();
+  const sailG = cx.createLinearGradient(mastX,-SH*0.98, mastX+dir*SW*0.5,-SH*0.28);
+  sailG.addColorStop(0,'#F0E6C8');
+  sailG.addColorStop(0.5,'#E8D8A0');
+  sailG.addColorStop(1,'#D4C080');
+  cx.fillStyle=sailG; cx.fill();
+  cx.strokeStyle='rgba(0,0,0,0.12)'; cx.lineWidth=1.5; cx.stroke();
+
+  // Skull & crossbones on sail
+  const skX = mastX + dir*SW*0.22, skY = -SH*0.65;
+  const sk = SH*0.1;
+  cx.fillStyle='rgba(0,0,0,0.55)';
+  cx.beginPath(); cx.ellipse(skX,skY,sk*0.85,sk*0.75,0,0,Math.PI*2); cx.fill();
+  cx.fillStyle='rgba(240,230,200,0.7)';
+  cx.beginPath(); cx.arc(skX-sk*0.28,skY-sk*0.08,sk*0.22,0,Math.PI*2); cx.fill();
+  cx.beginPath(); cx.arc(skX+sk*0.28,skY-sk*0.08,sk*0.22,0,Math.PI*2); cx.fill();
+  cx.fillStyle='rgba(0,0,0,0.55)';
+  [-0.25,0,0.25].forEach(tx=>{cx.beginPath();cx.rect(skX+tx*sk*0.8-sk*0.1,skY+sk*0.3,sk*0.2,sk*0.35);cx.fill();});
+  cx.strokeStyle='rgba(240,230,200,0.7)'; cx.lineWidth=sk*0.18; cx.lineCap='round';
+  cx.beginPath(); cx.moveTo(skX-sk*0.65,skY+sk*0.55); cx.lineTo(skX+sk*0.65,skY+sk*sk*0.02+sk*0.55); cx.stroke();
+  cx.beginPath(); cx.moveTo(skX+sk*0.65,skY+sk*0.55); cx.lineTo(skX-sk*0.65,skY+sk*sk*0.02+sk*0.55); cx.stroke();
+  cx.lineCap='butt';
+
+  // Sail horizontal rope lines
+  cx.strokeStyle='rgba(100,70,20,0.3)'; cx.lineWidth=1.5;
+  [0.35,0.55,0.75].forEach(t=>{
+    const sy = -SH*0.98 + t*SH*0.7;
+    cx.beginPath(); cx.moveTo(mastX,sy); cx.lineTo(mastX+dir*SW*0.45*(t*0.8+0.3),sy); cx.stroke();
+  });
+
+  // ── HULL ──
+  cx.beginPath();
+  cx.moveTo(-SW*0.48, -SH*0.08);
+  cx.bezierCurveTo(-SW*0.58, SH*0.22, -SW*0.42, SH*0.42, -SW*0.15, SH*0.46);
+  cx.lineTo(SW*0.15, SH*0.46);
+  cx.bezierCurveTo(SW*0.42, SH*0.42, SW*0.58, SH*0.22, SW*0.48, -SH*0.08);
+  cx.closePath();
+  const hullG = cx.createLinearGradient(-SW*0.3,-SH*0.08, SW*0.3, SH*0.46);
+  hullG.addColorStop(0, color);
+  hullG.addColorStop(0.6,'#3E2010');
+  hullG.addColorStop(1,'#1A0A00');
+  cx.fillStyle=hullG; cx.fill();
+  cx.strokeStyle='rgba(0,0,0,0.35)'; cx.lineWidth=2.5; cx.stroke();
+
+  // Hull wood plank lines
+  cx.strokeStyle='rgba(0,0,0,0.18)'; cx.lineWidth=1.5;
+  [0.12, 0.26, 0.38].forEach(t=>{
+    const hy = -SH*0.08 + t*SH*0.5;
+    const hw = SW*(0.48-t*0.2);
+    cx.beginPath(); cx.moveTo(-hw,hy); cx.lineTo(hw,hy); cx.stroke();
+  });
+
+  // Gold decorative stripe
+  cx.beginPath(); cx.moveTo(-SW*0.47,-SH*0.02); cx.lineTo(SW*0.47,-SH*0.02);
+  cx.strokeStyle='#C8A400'; cx.lineWidth=4; cx.stroke();
+  cx.beginPath(); cx.moveTo(-SW*0.46,SH*0.02); cx.lineTo(SW*0.46,SH*0.02);
+  cx.strokeStyle='rgba(255,215,0,0.3)'; cx.lineWidth=2; cx.stroke();
+
+  // ── PORTHOLES with cannon barrels ──
+  [-0.32, 0, 0.32].forEach((px,i) => {
+    const phx = SW*px, phy = SH*0.18;
+    // Porthole frame
+    cx.beginPath(); cx.arc(phx, phy, SH*0.075, 0, Math.PI*2);
+    cx.fillStyle='#0A0500'; cx.fill();
+    cx.strokeStyle='#C8A400'; cx.lineWidth=3; cx.stroke();
+    // Cannon barrel through porthole
+    cx.beginPath();
+    cx.rect(phx + dir*SH*0.07, phy-SH*0.03, dir*SH*0.14, SH*0.06);
+    cx.fillStyle='#444'; cx.fill();
+    cx.strokeStyle='#222'; cx.lineWidth=1; cx.stroke();
+    // Barrel opening ring
+    cx.beginPath(); cx.arc(phx + dir*SH*0.21, phy, SH*0.03,0,Math.PI*2);
+    cx.fillStyle='#333'; cx.fill();
+    cx.strokeStyle='#555'; cx.lineWidth=1.5; cx.stroke();
+  });
+
+  // ── DECK ──
+  cx.beginPath(); cx.rect(-SW*0.48, -SH*0.18, SW*0.96, SH*0.12);
+  const deckG = cx.createLinearGradient(0,-SH*0.18, 0,-SH*0.06);
+  deckG.addColorStop(0,'#A07820'); deckG.addColorStop(1,'#6B4810');
+  cx.fillStyle=deckG; cx.fill();
+  cx.strokeStyle='rgba(0,0,0,0.25)'; cx.lineWidth=1.5; cx.stroke();
+  // Deck planks
+  cx.strokeStyle='rgba(0,0,0,0.15)'; cx.lineWidth=1.2;
+  for(let dp=-6;dp<=6;dp++){
+    cx.beginPath();
+    cx.moveTo(SW*dp*0.08,-SH*0.18);
+    cx.lineTo(SW*dp*0.08,-SH*0.06);
+    cx.stroke();
+  }
+  // Deck railing
+  cx.beginPath(); cx.moveTo(-SW*0.48,-SH*0.18); cx.lineTo(SW*0.48,-SH*0.18);
+  cx.strokeStyle='#8B6010'; cx.lineWidth=4; cx.stroke();
+  // Railing posts
+  cx.strokeStyle='#6B4810'; cx.lineWidth=2.5;
+  for(let rp=-5;rp<=5;rp++){
+    cx.beginPath(); cx.moveTo(SW*rp*0.09,-SH*0.18); cx.lineTo(SW*rp*0.09,-SH*0.22); cx.stroke();
+  }
+
+  // ── MAIN DECK CANNON (big, visible) ──
+  const canX = dir * SW * 0.28;
+  const canY = -SH * 0.17;
+  cx.save(); cx.translate(canX, canY);
+
+  // Cannon carriage wheels
+  [[-SW*0.06, SH*0.04],[SW*0.06, SH*0.04]].forEach(([wx,wy])=>{
+    cx.beginPath(); cx.arc(wx,wy, SH*0.055,0,Math.PI*2);
+    cx.fillStyle='#5C2E00'; cx.fill();
+    cx.strokeStyle='#C8A400'; cx.lineWidth=2.5; cx.stroke();
+    // Wheel spokes
+    cx.strokeStyle='#8B4500'; cx.lineWidth=1.5;
+    for(let sp=0;sp<6;sp++){
+      const a = sp*Math.PI/3;
+      cx.beginPath(); cx.moveTo(wx,wy); cx.lineTo(wx+Math.cos(a)*SH*0.05,wy+Math.sin(a)*SH*0.05); cx.stroke();
+    }
+  });
+
+  // Cannon body (big barrel)
+  cx.beginPath(); cx.ellipse(0, 0, SW*0.12, SH*0.06, 0,0,Math.PI*2);
+  const canG = cx.createRadialGradient(-SW*0.03,-SH*0.02, 1, 0,0,SW*0.12);
+  canG.addColorStop(0,'#888'); canG.addColorStop(1,'#222');
+  cx.fillStyle=canG; cx.fill();
+  cx.strokeStyle='#111'; cx.lineWidth=2; cx.stroke();
+
+  // Decorative rings on cannon
+  cx.strokeStyle='#555'; cx.lineWidth=3;
+  [-SW*0.06, 0, SW*0.06].forEach(rx=>{
+    cx.beginPath(); cx.ellipse(rx*dir, 0, Math.abs(rx)*0.3+SW*0.01, SH*0.06,0,0,Math.PI*2); cx.stroke();
+  });
+
+  // Cannon barrel (long, pointing toward enemy)
+  cx.beginPath();
+  cx.moveTo(-dir*SW*0.08, -SH*0.045);
+  cx.lineTo(dir*SW*0.25, -SH*0.045);
+  cx.lineTo(dir*SW*0.25, SH*0.045);
+  cx.lineTo(-dir*SW*0.08, SH*0.045);
+  cx.closePath();
+  cx.fillStyle='#3a3a3a'; cx.fill();
+  cx.strokeStyle='#111'; cx.lineWidth=1.5; cx.stroke();
+
+  // Barrel opening
+  cx.beginPath(); cx.arc(dir*SW*0.25, 0, SH*0.045,0,Math.PI*2);
+  cx.fillStyle='#111'; cx.fill();
+  cx.strokeStyle='#555'; cx.lineWidth=2; cx.stroke();
+
+  cx.restore();
+
+  // ── FLAG at mast top ──
+  const flagW = SW*0.28, flagH = SH*0.14;
+  cx.beginPath();
+  cx.moveTo(mastX, -SH*1.05);
+  cx.lineTo(mastX + dir*flagW, -SH*1.05 + flagH*0.3);
+  cx.lineTo(mastX, -SH*1.05 + flagH*0.6);
+  cx.closePath();
+  cx.fillStyle=accent; cx.fill();
+  cx.strokeStyle='rgba(0,0,0,0.2)'; cx.lineWidth=1; cx.stroke();
+
+  // ── PIRATES ON DECK ──
+  const sc2 = Math.min(W/900, H/350) * 0.9;
+  const ppos = dir>0 ? [-0.3,-0.05,0.22] : [0.3,0.05,-0.22];
+  ppos.forEach((px,i)=>{
+    figure(SW*px, -SH*0.18, dir,
+      i===0 ? color : (i===1 ? accent : color),
+      color, '#111', AF+i*25, sc2);
+  });
+
+  cx.restore();
+}
+
 function drawScene() {
-  const W=cnv.width,H=cnv.height;
+  const W=cnv.width, H=cnv.height;
   cx.clearRect(0,0,W,H);
   if(W===0||H===0)return;
-  const RY=H*.56;
-  cx.save(); cx.setLineDash([9,7]); cx.beginPath(); cx.moveTo(W*.5,4); cx.lineTo(W*.5,H-4); cx.strokeStyle='rgba(120,120,120,0.2)'; cx.lineWidth=2; cx.stroke(); cx.setLineDash([]); cx.restore();
-  cx.beginPath(); cx.moveTo(W*.06,RY+4); cx.lineTo(W*.94,RY+4); cx.strokeStyle='rgba(0,0,0,0.12)'; cx.lineWidth=18; cx.lineCap='round'; cx.stroke();
-  const rg=cx.createLinearGradient(0,RY-8,0,RY+8); rg.addColorStop(0,'#D4A843'); rg.addColorStop(.35,'#8B6914'); rg.addColorStop(1,'#5C3D0A');
-  cx.beginPath(); cx.moveTo(W*.06,RY); cx.lineTo(W*.94,RY); cx.strokeStyle=rg; cx.lineWidth=15; cx.lineCap='round'; cx.stroke();
-  cx.beginPath(); cx.moveTo(W*.07,RY-4); cx.lineTo(W*.93,RY-4); cx.strokeStyle='rgba(255,225,80,0.3)'; cx.lineWidth=3; cx.stroke();
-  cx.save(); cx.strokeStyle='rgba(80,30,5,0.22)'; cx.lineWidth=2;
-  for(let tx=W*.07;tx<W*.93;tx+=18){cx.beginPath();cx.moveTo(tx,RY-7);cx.lineTo(tx+9,RY+6);cx.stroke();}
-  cx.restore();
-  cx.beginPath(); cx.moveTo(0,RY); cx.lineTo(W*.07,RY); cx.strokeStyle='#1565C0'; cx.lineWidth=12; cx.lineCap='round'; cx.stroke();
-  cx.beginPath(); cx.moveTo(W*.93,RY); cx.lineTo(W,RY); cx.strokeStyle='#C62828'; cx.lineWidth=12; cx.lineCap='round'; cx.stroke();
-  const sc=Math.min(W/700,H/230);
-  [W*.07,W*.15,W*.23].forEach((bx,i)=>figure(bx,RY,1,['#1565C0','#1E88E5','#1976D2'][i],['#0D47A1','#0D47A1','#1565C0'][i],'#0D47A1',AF+i*22,sc));
-  [W*.93,W*.85,W*.77].forEach((rx,i)=>figure(rx,RY,-1,['#C62828','#E53935','#D32F2F'][i],['#B71C1C','#B71C1C','#C62828'][i],'#B71C1C',AF+i*22,sc));
-  const knotX=W*(0.5+(G.pos/50)*0.3);
-  const kd=document.getElementById('knot-dot'); kd.style.left=knotX+'px'; kd.style.top=RY+'px';
+
+  const WY = H * 0.68; // waterline
+  shipBob = Math.sin(AF*0.035)*4;
+
+  // Smooth position transition
+  smoothPos += (G.pos - smoothPos) * 0.08;
+
+  const prog = smoothPos / 50; // -1 to 1
+
+  // ── SKY gradient ──
+  const skyG = cx.createLinearGradient(0,0,0,WY);
+  skyG.addColorStop(0,'#1a3a6e'); skyG.addColorStop(0.5,'#2d6abf'); skyG.addColorStop(1,'#87CEEB');
+  cx.fillStyle=skyG; cx.fillRect(0,0,W,WY);
+
+  // Clouds
+  cx.fillStyle='rgba(255,255,255,0.75)';
+  [[0.15,0.12,50],[0.42,0.06,70],[0.68,0.15,45],[0.85,0.08,55]].forEach(([fx,fy,r])=>{
+    const cx2=W*fx+Math.sin(AF*0.008+fx*10)*8, cy=H*fy;
+    cx.beginPath(); cx.arc(cx2,cy,r,0,Math.PI*2); cx.fill();
+    cx.beginPath(); cx.arc(cx2+r*0.7,cy+r*0.2,r*0.65,0,Math.PI*2); cx.fill();
+    cx.beginPath(); cx.arc(cx2-r*0.6,cy+r*0.2,r*0.55,0,Math.PI*2); cx.fill();
+  });
+
+  // Sun
+  const sunG = cx.createRadialGradient(W*0.88,H*0.1,5, W*0.88,H*0.1,40);
+  sunG.addColorStop(0,'#FFE87A'); sunG.addColorStop(1,'rgba(255,200,0,0)');
+  cx.fillStyle=sunG; cx.beginPath(); cx.arc(W*0.88,H*0.1,40,0,Math.PI*2); cx.fill();
+
+  // ── OCEAN ──
+  const seaG = cx.createLinearGradient(0,WY,0,H);
+  seaG.addColorStop(0,'#1a7abf'); seaG.addColorStop(0.4,'#0f5a8a'); seaG.addColorStop(1,'#073a5c');
+  cx.fillStyle=seaG; cx.fillRect(0,WY,W,H-WY);
+
+  // Wave lines
+  for(let wi=0;wi<5;wi++){
+    const wphase = (AF*1.2 + wi*70) % W;
+    const wy2 = WY + wi*12 + Math.sin(AF*0.04+wi)*3;
+    cx.beginPath();
+    cx.moveTo(-W+wphase, wy2);
+    cx.quadraticCurveTo(-W/2+wphase+20, wy2-7, wphase, wy2);
+    cx.quadraticCurveTo(W/4+wphase+20, wy2-7, W/2+wphase, wy2);
+    cx.strokeStyle=`rgba(255,255,255,${0.2-wi*0.03})`; cx.lineWidth=2; cx.stroke();
+  }
+
+  // ── CENTER LINE (dashed) ──
+  cx.setLineDash([8,6]);
+  cx.beginPath(); cx.moveTo(W*0.5,WY-20); cx.lineTo(W*0.5,WY+20);
+  cx.strokeStyle='rgba(255,255,255,0.3)'; cx.lineWidth=2; cx.stroke();
+  cx.setLineDash([]);
+
+  // ── SHIP POSITIONS ──
+  const blueX = W*(0.22 - prog*0.20);
+  const redX  = W*(0.78 - prog*0.20);
+
+  // Draw ships
+  drawShip(blueX, WY, '#1565C0','#0D47A1',  1,  shipBob);
+  drawShip(redX,  WY, '#C62828','#B71C1C', -1, -shipBob);
+
+  // ── CANNON SMOKE ──
+  cannonSmoke = cannonSmoke.filter(p=>{
+    p.x+=p.vx; p.y+=p.vy*0.9; p.r+=0.5; p.a-=0.03; p.t++;
+    if(p.a<=0) return false;
+    cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    cx.fillStyle=`rgba(160,160,160,${p.a})`; cx.fill();
+    return true;
+  });
+
+  // ── SINGLE CANNONBALL ──
+  if(!ballInitialized) initBall();
+
+  // Update flying animation
+  if(ballAnim.flying) {
+    ballAnim.vy += 0.25; // gravity arc
+    ballAnim.x += ballAnim.vx;
+    ballAnim.y += ballAnim.vy;
+    ballAnim.frame++;
+    cannonSmoke.push({x:ballAnim.x,y:ballAnim.y,r:rndF(2,6),a:0.35,vx:rndF(-0.3,0.3),vy:rndF(-0.5,0)});
+    if(ballAnim.frame >= ballAnim.frames) {
+      ballProgress = ballAnim.targetProgress;
+      ballAnim.flying = false;
+      // Check if reached a ship
+      if(ballProgress <= 0.02) {
+        spawnExplosion(blueX, WY-H*0.15);
+        spawnExplosion(blueX+W*0.06, WY-H*0.22);
+      }
+      if(ballProgress >= 0.98) {
+        spawnExplosion(redX, WY-H*0.15);
+        spawnExplosion(redX-W*0.06, WY-H*0.22);
+      }
+    }
+  }
+
+  // Draw resting ball (between ships when not flying)
+  if(!ballAnim.flying) {
+    const bRestX = blueX + (redX-blueX)*ballProgress;
+    const bRestY = WY - H*0.08 + Math.sin(AF*0.06)*4;
+    // Glow aura
+    const aura = cx.createRadialGradient(bRestX,bRestY,4,bRestX,bRestY,22);
+    aura.addColorStop(0,'rgba(200,200,100,0.6)'); aura.addColorStop(1,'rgba(0,0,0,0)');
+    cx.beginPath(); cx.arc(bRestX,bRestY,22,0,Math.PI*2); cx.fillStyle=aura; cx.fill();
+    // Shadow
+    cx.beginPath(); cx.ellipse(bRestX,bRestY+11,12,4,0,0,Math.PI*2);
+    cx.fillStyle='rgba(0,0,0,0.3)'; cx.fill();
+    // Ball
+    const bG = cx.createRadialGradient(bRestX-4,bRestY-4,1,bRestX,bRestY,13);
+    bG.addColorStop(0,'#bbb'); bG.addColorStop(1,'#111');
+    cx.beginPath(); cx.arc(bRestX,bRestY,13,0,Math.PI*2);
+    cx.fillStyle=bG; cx.fill();
+    cx.strokeStyle='#000'; cx.lineWidth=2; cx.stroke();
+    // Shine
+    cx.beginPath(); cx.arc(bRestX-4,bRestY-4,4,0,Math.PI*2);
+    cx.fillStyle='rgba(255,255,255,0.4)'; cx.fill();
+  } else {
+    // Flying ball
+    for(let t=1;t<=6;t++){
+      cx.beginPath();
+      cx.arc(ballAnim.x-ballAnim.vx*t*1.2, ballAnim.y-ballAnim.vy*t*0.6, Math.max(1,12-t*2),0,Math.PI*2);
+      cx.fillStyle=`rgba(80,80,80,${0.3-t*0.04})`; cx.fill();
+    }
+    const bG2=cx.createRadialGradient(ballAnim.x-3,ballAnim.y-3,1,ballAnim.x,ballAnim.y,12);
+    bG2.addColorStop(0,'#bbb'); bG2.addColorStop(1,'#111');
+    cx.beginPath(); cx.arc(ballAnim.x,ballAnim.y,12,0,Math.PI*2);
+    cx.fillStyle=bG2; cx.fill();
+    cx.strokeStyle='#000'; cx.lineWidth=2; cx.stroke();
+  }
+
+  // ── EXPLOSIONS ──
+  explosions = explosions.filter(ex=>{
+    ex.pts = ex.pts.filter(p=>{
+      p.x+=p.vx; p.y+=p.vy; p.vy+=0.2; p.vx*=0.97;
+      p.life-=0.018; p.r*=0.97;
+      if(p.life<=0||p.r<0.5) return false;
+      cx.globalAlpha=p.life;
+      cx.beginPath(); cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      cx.fillStyle=p.color; cx.fill(); cx.globalAlpha=1;
+      return true;
+    });
+    return ex.pts.length>0;
+  }
+}
+
+// ── WIN SCREEN EXPLOSION ──
+let winParts = [], winAF = 0, winAnimRunning = false;
+function startWinExplosion(color) {
+  const wc = document.getElementById('win-canvas');
+  wc.width = window.innerWidth; wc.height = window.innerHeight;
+  const wx = wc.getContext('2d');
+  winParts = [];
+  const cx2 = wc.width/2, cy2 = wc.height/2;
+  // Massive burst
+  for(let i=0;i<200;i++){
+    const ang = Math.random()*Math.PI*2, spd = rndF(3,18);
+    const colors = ['#FFD700','#FF4500','#FF8C00','#FFF700','#FF6347','#FFFFFF','#FF1493',color];
+    winParts.push({
+      x:cx2, y:cy2,
+      vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd-5,
+      r:rndF(4,16), color:colors[Math.floor(Math.random()*colors.length)],
+      life:1, rot:Math.random()*Math.PI*2, vrot:rndF(-0.2,0.2),
+      shape: Math.random()<0.5 ? 'circle' : 'rect'
+    });
+  }
+  // Streaming confetti from top
+  for(let i=0;i<120;i++){
+    const colors2 = ['#FFD700','#FF4500','#1E88E5','#E53935','#43A047','#AB47BC','#FFFFFF'];
+    winParts.push({
+      x:Math.random()*wc.width, y:-20,
+      vx:rndF(-2,2), vy:rndF(3,9),
+      r:rndF(5,12), color:colors2[Math.floor(Math.random()*colors2.length)],
+      life:1, rot:Math.random()*Math.PI*2, vrot:rndF(-0.15,0.15),
+      shape:'rect', delay: Math.floor(Math.random()*60)
+    });
+  }
+  if(!winAnimRunning){ winAnimRunning=true; runWinAnim(wx,wc); }
+}
+function runWinAnim(wx, wc) {
+  winAF++;
+  wx.clearRect(0,0,wc.width,wc.height);
+  let alive = false;
+  winParts.forEach(p=>{
+    if(p.delay && p.delay>0){ p.delay--; return; }
+    p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.vx*=0.99;
+    p.life-=0.008; p.rot+=p.vrot; p.r*=0.995;
+    if(p.life<=0||p.r<0.5) return;
+    alive=true;
+    wx.save(); wx.globalAlpha=p.life;
+    wx.translate(p.x,p.y); wx.rotate(p.rot);
+    wx.fillStyle=p.color;
+    if(p.shape==='circle'){
+      wx.beginPath(); wx.arc(0,0,p.r,0,Math.PI*2); wx.fill();
+    } else {
+      wx.fillRect(-p.r/2,-p.r*1.5,p.r,p.r*3);
+    }
+    // Sparkle glow
+    if(p.r>8){ wx.globalAlpha=p.life*0.3; wx.fillStyle='#fff'; wx.beginPath(); wx.arc(-p.r*0.3,-p.r*0.3,p.r*0.35,0,Math.PI*2); wx.fill(); }
+    wx.restore();
+  });
+  // Keep firing new confetti
+  if(winAF % 3 === 0 && winAF < 180){
+    const colors3 = ['#FFD700','#FF4500','#1E88E5','#E53935','#FFFFFF','#FF69B4'];
+    winParts.push({
+      x:Math.random()*wc.width, y:-10,
+      vx:rndF(-1.5,1.5), vy:rndF(4,10),
+      r:rndF(5,10), color:colors3[Math.floor(Math.random()*colors3.length)],
+      life:0.9, rot:0, vrot:rndF(-0.1,0.1), shape:'rect'
+    });
+  }
+  if(document.getElementById('win').classList.contains('show')){
+    requestAnimationFrame(()=>runWinAnim(wx,wc));
+  } else {
+    winAnimRunning=false;
+  }
 }
 
 function animLoop() { AF++; drawScene(); requestAnimationFrame(animLoop); }
@@ -823,7 +1322,7 @@ function toggleMusic() {
 <div id="lobby">
   <div id="lcard">
     <span id="lemoji">🎮</span>
-    <div id="ltitle">Guerra Matemática</div>
+    <div id="ltitle">🦜 El Tesoro Matemático</div>
     <div id="lsub">Esperando jugadores...</div>
     <div id="lstatus">
       <div class="lteam blue" id="lstat-blue">🔵 Azul: esperando</div>
