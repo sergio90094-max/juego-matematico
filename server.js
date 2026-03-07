@@ -84,7 +84,6 @@ function genQ() {
       break;
   }
   return { text, answer: Math.round(ans) };
-}};
 }
 
 /* ══════════════════════════════════════
