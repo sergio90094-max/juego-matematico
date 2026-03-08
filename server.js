@@ -32,6 +32,7 @@ function freshState() {
 let G = freshState();
 let timerInterval = null;
 let gameStarted = false;
+let gameDifficulty = 'easy'; // 'easy' | 'medium' | 'hard'
 let gamePaused = false;
 
 /* ══════════════════════════════════════
@@ -44,45 +45,94 @@ const clients = new Map(); // ws -> { type }
    GENERADOR DE PREGUNTAS
 ══════════════════════════════════════ */
 function rnd(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+
 function genQ() {
-  const type = rnd(0, 5);
+  const d = gameDifficulty;
   let a, b, ans, text;
 
-  switch (type) {
+  if (d === 'easy') {
+    // ── FÁCIL: tablas 1-15, multiplicación y división directa ──
+    const type = rnd(0, 3);
+    switch(type) {
+      case 0: // Multiplicación tablas 1-15
+        a = rnd(1,15); b = rnd(1,15);
+        ans = a*b; text = a + ' × ' + b + ' = ?';
+        break;
+      case 1: // Multiplicación tablas 1-15 (otro orden)
+        a = rnd(1,15); b = rnd(1,10);
+        ans = a*b; text = b + ' × ' + a + ' = ?';
+        break;
+      case 2: // División directa (resultado 1-15)
+        ans = rnd(1,15); b = rnd(2,15); a = ans*b;
+        text = a + ' ÷ ' + b + ' = ?';
+        break;
+      case 3: // División directa variante
+        ans = rnd(2,12); b = rnd(2,10); a = ans*b;
+        text = a + ' ÷ ' + b + ' = ?';
+        break;
+    }
 
-    case 0: // Multiplicación directa
-      a = rnd(2,12); b = rnd(2,12);
-      ans = a*b; text = a + ' × ' + b + ' = ?';
-      break;
+  } else if (d === 'medium') {
+    // ── INTERMEDIO: tablas 1-20, incógnitas, divisiones con incógnita ──
+    const type = rnd(0, 5);
+    switch(type) {
+      case 0: // Multiplicación tablas 1-20
+        a = rnd(2,20); b = rnd(2,20);
+        ans = a*b; text = a + ' × ' + b + ' = ?';
+        break;
+      case 1: // Multiplicación con incógnita izquierda
+        a = rnd(2,15); b = rnd(2,15);
+        ans = a; text = '? × ' + b + ' = ' + (a*b);
+        break;
+      case 2: // Multiplicación con incógnita derecha
+        a = rnd(2,15); b = rnd(2,15);
+        ans = b; text = a + ' × ? = ' + (a*b);
+        break;
+      case 3: // División directa tablas hasta 20
+        b = rnd(2,20); ans = rnd(2,20); a = b*ans;
+        text = a + ' ÷ ' + b + ' = ?';
+        break;
+      case 4: // División con incógnita divisor
+        b = rnd(2,15); ans = rnd(2,15); a = b*ans;
+        text = a + ' ÷ ? = ' + ans; ans = b;
+        break;
+      case 5: // División con incógnita dividendo
+        b = rnd(2,15); ans = rnd(2,15); a = b*ans;
+        text = '? ÷ ' + b + ' = ' + ans; ans = a;
+        break;
+    }
 
-    case 1: // Multiplicación directa (tablas grandes)
-      a = rnd(6,12); b = rnd(6,12);
-      ans = a*b; text = a + ' × ' + b + ' = ?';
-      break;
-
-    case 2: // Multiplicación con incógnita izquierda
-      a = rnd(2,12); b = rnd(2,12);
-      ans = a; text = '? × ' + b + ' = ' + (a*b);
-      break;
-
-    case 3: // Multiplicación con incógnita derecha
-      a = rnd(2,12); b = rnd(2,12);
-      ans = b; text = a + ' × ? = ' + (a*b);
-      break;
-
-    case 4: // División directa
-      b = rnd(2,12); ans = rnd(2,12); a = b*ans;
-      text = a + ' ÷ ' + b + ' = ?';
-      break;
-
-    case 5: // División con incógnita
-      b = rnd(2,12); ans = rnd(2,12); a = b*ans;
-      { const xf = rnd(0,1);
-        if(xf===0){ text = a + ' ÷ ? = ' + ans; ans = b; }
-        else      { text = '? ÷ ' + b + ' = ' + ans; ans = a; }
-      }
-      break;
+  } else {
+    // ── DIFÍCIL: tablas hasta 25, incógnitas, cuadrados, doble incógnita ──
+    const type = rnd(0, 5);
+    switch(type) {
+      case 0: // Tablas grandes hasta 25
+        a = rnd(10,25); b = rnd(10,25);
+        ans = a*b; text = a + ' × ' + b + ' = ?';
+        break;
+      case 1: // Multiplicación con incógnita tablas grandes
+        a = rnd(8,20); b = rnd(8,20);
+        ans = a; text = '? × ' + b + ' = ' + (a*b);
+        break;
+      case 2: // División con incógnita dividendo tablas grandes
+        b = rnd(8,20); ans = rnd(8,20); a = b*ans;
+        text = '? ÷ ' + b + ' = ' + ans; ans = a;
+        break;
+      case 3: // División difícil
+        b = rnd(12,25); ans = rnd(8,20); a = b*ans;
+        text = a + ' ÷ ' + b + ' = ?';
+        break;
+      case 4: // Cuadrados (5² a 15²)
+        a = rnd(5,15);
+        ans = a*a; text = a + '² = ?';
+        break;
+      case 5: // Multiplicación de 3 factores pequeños
+        a = rnd(2,8); b = rnd(2,8); { const c = rnd(2,5);
+        ans = a*b*c; text = a + ' × ' + b + ' × ' + c + ' = ?'; }
+        break;
+    }
   }
+
   return { text, answer: Math.round(ans) };
 }
 
@@ -314,6 +364,7 @@ wss.on('connection', (ws) => {
 
       case 'startGame':
         if (!gameStarted) {
+          gameDifficulty = msg.difficulty || 'easy';
           gameStarted = true;
           gamePaused = false;
           G = freshState();

@@ -140,6 +140,12 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 @keyframes pulse-btn { 0%,100%{box-shadow:0 8px 30px rgba(249,168,37,.5);} 50%{box-shadow:0 8px 50px rgba(249,168,37,.9);} }
 #start-btn:hover { transform:translateY(-3px) scale(1.04); }
 #start-btn:active { transform:scale(.97); }
+#diff-label { color:rgba(255,255,255,0.9); font-size:1rem; margin:14px 0 8px; font-family:'Fredoka One',cursive; letter-spacing:1px; }
+#diff-row { display:flex; gap:10px; justify-content:center; margin-bottom:10px; }
+.diff-btn { padding:10px 20px; border-radius:30px; border:3px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.12); color:white; font-family:'Fredoka One',cursive; font-size:1rem; cursor:pointer; transition:all .2s; }
+.diff-btn:hover { transform:scale(1.06); background:rgba(255,255,255,0.22); }
+.diff-btn.selected { background:rgba(255,255,255,0.35); border-color:rgba(255,255,255,0.9); transform:scale(1.08); box-shadow:0 4px 20px rgba(255,255,255,0.3); }
+#diff-desc { color:rgba(255,255,255,0.75); font-size:0.85rem; margin-bottom:10px; min-height:20px; }
 #creator { margin-top:18px; font-family:'Fredoka One',cursive; font-size:.85rem; color:rgba(255,255,255,.55); letter-spacing:1px; }
 #music-toggle { position:absolute; bottom:20px; right:20px; background:rgba(255,255,255,.15); border:2px solid rgba(255,255,255,.3); border-radius:50px; padding:7px 16px; font-family:'Fredoka One',cursive; font-size:.85rem; color:white; cursor:pointer; backdrop-filter:blur(6px); transition:background .2s; }
 #music-toggle:hover { background:rgba(255,255,255,.25); }
@@ -158,6 +164,13 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
       <div class="team-badge">VS</div>
       <div class="team-badge">🔴 Equipo 2</div>
     </div>
+    <div id="diff-label">⚓ Selecciona la dificultad:</div>
+    <div id="diff-row">
+      <button class="diff-btn selected" id="diff-easy"   onclick="setDiff('easy')">🟢 Fácil</button>
+      <button class="diff-btn"          id="diff-medium" onclick="setDiff('medium')">🟡 Intermedio</button>
+      <button class="diff-btn"          id="diff-hard"   onclick="setDiff('hard')">🔴 Difícil</button>
+    </div>
+    <div id="diff-desc">Tablas del 1 al 5 · Divisiones sencillas</div>
     <button id="start-btn" onclick="startMusic()">▶ ¡JUGAR!</button>
     <div id="creator">✨ Creado por Sergio Arango</div>
   </div>
@@ -285,13 +298,27 @@ let ws, G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'' };
     document.getElementById('startBtn').disabled = !(blueReady && redReady);
   }
 
+  let selectedDiff = 'easy';
+  const diffDesc = {
+    easy:   'Tablas del 1 al 15 · Multiplicación y división directa',
+    medium: 'Tablas del 1 al 20 · División e incógnitas',
+    hard:   'Tablas del 1 al 25 · Incógnitas · Cuadrados · 3 factores'
+  };
+  function setDiff(d) {
+    selectedDiff = d;
+    ['easy','medium','hard'].forEach(x => {
+      document.getElementById('diff-'+x).classList.toggle('selected', x===d);
+    });
+    document.getElementById('diff-desc').textContent = diffDesc[d];
+  }
+
   function startGame() {
-    send({ type: 'startGame' });
+    send({ type: 'startGame', difficulty: selectedDiff });
     document.getElementById('lobby').classList.add('hidden');
   }
 
   function startSolo() {
-    send({ type: 'startGame' });
+    send({ type: 'startGame', difficulty: selectedDiff });
     document.getElementById('lobby').classList.add('hidden');
   }
 
