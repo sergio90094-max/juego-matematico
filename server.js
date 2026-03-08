@@ -562,6 +562,12 @@ const MIME = {
 };
 
 const httpServer = http.createServer((req, res) => {
+  // ── Endpoint para UptimeRobot — responde rápido sin leer archivos ──
+  if (req.url === '/ping') {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('OK');
+    return;
+  }
   let filePath;
   if (req.url === '/' || req.url === '/index.html') {
     filePath = path.join(__dirname, 'index.html');
