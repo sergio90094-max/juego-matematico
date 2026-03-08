@@ -125,29 +125,142 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 @media(max-width:500px){ #main{grid-template-columns:minmax(80px,130px) minmax(0,1fr) minmax(80px,130px);} }
 @media(max-width:380px){ #main{grid-template-columns:minmax(70px,110px) minmax(0,1fr) minmax(70px,110px);} .pill-name{display:none;} }
 /* ══ PANTALLA DE INICIO ══ */
-#start-screen { position:fixed; inset:0; z-index:500; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#0D47A1 0%,#1565C0 40%,#B71C1C 100%); overflow:hidden; transition:opacity .6s ease,transform .6s ease; }
+/* ══ LOBBY DARK THEME ══ */
+#start-screen {
+  position:fixed; inset:0; z-index:500; display:flex; align-items:center; justify-content:center;
+  background: radial-gradient(ellipse at 30% 20%, #1a0533 0%, #000000 50%, #0a0a1a 100%);
+  overflow:hidden; transition:opacity .6s ease,transform .6s ease;
+}
 #start-screen.hide { opacity:0; transform:scale(1.05); pointer-events:none; }
-.star { position:absolute; border-radius:50%; background:rgba(255,255,255,.15); animation:float linear infinite; }
-@keyframes float { 0%{transform:translateY(100vh) rotate(0deg);opacity:0;} 10%{opacity:1;} 90%{opacity:1;} 100%{transform:translateY(-20vh) rotate(360deg);opacity:0;} }
-#start-card { text-align:center; padding:40px 50px; position:relative; z-index:2; max-width:520px; width:90%; }
-#start-emoji { font-size:clamp(3rem,8vw,5rem); display:block; margin-bottom:10px; animation:bounce 2s ease-in-out infinite; }
-@keyframes bounce { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
-#start-title { font-family:'Fredoka One',cursive; font-size:clamp(2rem,5vw,3.2rem); color:white; text-shadow:0 3px 16px rgba(0,0,0,.4); line-height:1.1; margin-bottom:6px; }
-#start-sub { font-family:'Fredoka One',cursive; font-size:clamp(.9rem,2vw,1.2rem); color:rgba(255,255,255,.75); margin-bottom:28px; }
-.teams-row { display:flex; gap:16px; justify-content:center; margin-bottom:28px; }
-.team-badge { background:rgba(255,255,255,.12); border:2px solid rgba(255,255,255,.3); border-radius:14px; padding:10px 20px; font-family:'Fredoka One',cursive; font-size:clamp(.9rem,2vw,1.1rem); color:white; backdrop-filter:blur(6px); }
-#start-btn { background:linear-gradient(135deg,#F9A825,#FF6F00); color:white; border:none; padding:16px 48px; border-radius:50px; font-family:'Fredoka One',cursive; font-size:clamp(1.2rem,3vw,1.6rem); cursor:pointer; box-shadow:0 8px 30px rgba(249,168,37,.5); transition:transform .18s,box-shadow .18s; letter-spacing:1px; animation:pulse-btn 2.5s ease-in-out infinite; }
-@keyframes pulse-btn { 0%,100%{box-shadow:0 8px 30px rgba(249,168,37,.5);} 50%{box-shadow:0 8px 50px rgba(249,168,37,.9);} }
+
+/* Partículas flotantes doradas */
+.star { position:absolute; border-radius:50%; animation:floatStar linear infinite; }
+@keyframes floatStar {
+  0%   { transform:translateY(100vh) rotate(0deg); opacity:0; }
+  10%  { opacity:1; }
+  90%  { opacity:0.8; }
+  100% { transform:translateY(-10vh) rotate(720deg); opacity:0; }
+}
+
+/* Card principal */
+#start-card {
+  text-align:center; padding:24px 30px; position:relative; z-index:2;
+  max-width:700px; width:95%;
+  background: linear-gradient(145deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+  border: 1px solid rgba(255,215,0,0.2);
+  border-radius:24px;
+  box-shadow: 0 0 60px rgba(120,0,255,0.15), 0 0 120px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.08);
+  backdrop-filter: blur(12px);
+}
+
+/* Título con brillo animado */
+#start-title {
+  font-family:'Fredoka One',cursive;
+  font-size: clamp(1.6rem,4vw,2.6rem);
+  background: linear-gradient(90deg, #FFD700, #FF8C00, #FFD700, #FFF8DC, #FFD700);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shine 3s linear infinite;
+  text-shadow: none;
+  margin-bottom:10px; line-height:1.2;
+}
+@keyframes shine { 0%{background-position:0%} 100%{background-position:300%} }
+
+.teams-row { display:flex; gap:12px; justify-content:center; margin-bottom:14px; }
+.team-badge {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius:12px; padding:8px 18px;
+  font-family:'Fredoka One',cursive; font-size:clamp(.85rem,2vw,1rem);
+  color: #FFD700;
+  text-shadow: 0 0 10px rgba(255,215,0,0.6);
+  box-shadow: 0 0 12px rgba(255,215,0,0.1);
+}
+
+/* Dificultad */
+#diff-row { display:flex; gap:8px; justify-content:center; margin-bottom:6px; }
+.diff-btn {
+  padding:8px 18px; border-radius:30px;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.7);
+  font-family:'Fredoka One',cursive; font-size:.9rem; cursor:pointer; transition:all .2s;
+}
+.diff-btn:hover { background:rgba(255,255,255,0.12); color:white; transform:scale(1.05); }
+.diff-btn.selected {
+  background: linear-gradient(135deg,rgba(255,215,0,0.25),rgba(255,140,0,0.2));
+  border-color: #FFD700;
+  color: #FFD700;
+  text-shadow: 0 0 10px rgba(255,215,0,0.8);
+  box-shadow: 0 0 16px rgba(255,215,0,0.25);
+  transform:scale(1.07);
+}
+#diff-desc { color:rgba(255,255,255,0.45); font-size:0.78rem; margin-bottom:10px; min-height:16px; }
+
+/* Sección temas */
+.cfg-label {
+  color: #a78bfa;
+  text-shadow: 0 0 12px rgba(167,139,250,0.7);
+  font-family:'Fredoka One',cursive; font-size:.95rem;
+  margin:8px 0 6px; display:flex; align-items:center; gap:8px;
+}
+#sel-all-btn, #sel-none-btn {
+  font-size:0.68rem; padding:3px 9px; border-radius:20px; border:none; cursor:pointer;
+  font-family:'Fredoka One',cursive; transition:all .2s;
+}
+#sel-all-btn  { background:rgba(74,222,128,0.2); color:#4ade80; border:1px solid rgba(74,222,128,0.4); }
+#sel-none-btn { background:rgba(248,113,113,0.2); color:#f87171; border:1px solid rgba(248,113,113,0.4); }
+#sel-all-btn:hover  { background:rgba(74,222,128,0.35); }
+#sel-none-btn:hover { background:rgba(248,113,113,0.35); }
+
+#topics-grid { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:8px; max-height:210px; overflow-y:auto; width:100%; }
+#topics-grid::-webkit-scrollbar { width:3px; }
+#topics-grid::-webkit-scrollbar-thumb { background:rgba(255,215,0,0.3); border-radius:4px; }
+
+.grade-group {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius:12px; padding:10px 14px; min-width:155px; flex:1;
+}
+.grade-title {
+  color: #7dd3fc;
+  text-shadow: 0 0 8px rgba(125,211,252,0.6);
+  font-family:'Fredoka One',cursive; font-size:0.82rem;
+  margin-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:4px;
+}
+.topic-cb { display:flex; align-items:center; gap:6px; color:rgba(255,255,255,0.65); font-size:0.8rem; cursor:pointer; padding:3px 0; user-select:none; transition:color .15s; }
+.topic-cb input { accent-color:#FFD700; width:14px; height:14px; cursor:pointer; }
+.topic-cb:hover { color:rgba(255,255,255,0.95); text-shadow:0 0 6px rgba(255,255,255,0.4); }
+#topics-warn { color:#FBBF24; font-size:0.78rem; margin-bottom:4px; text-shadow:0 0 8px rgba(251,191,36,0.6); }
+
+/* Botón JUGAR */
+#start-btn {
+  background: linear-gradient(135deg,#FFD700,#FF8C00,#FF6F00);
+  color: #000;
+  border:none; padding:14px 50px; border-radius:50px;
+  font-family:'Fredoka One',cursive; font-size:clamp(1.1rem,3vw,1.5rem);
+  cursor:pointer; letter-spacing:1px; margin-top:10px;
+  box-shadow: 0 0 30px rgba(255,165,0,0.5), 0 0 60px rgba(255,165,0,0.2);
+  animation: glowBtn 2s ease-in-out infinite;
+  transition:transform .18s;
+}
+@keyframes glowBtn {
+  0%,100% { box-shadow:0 0 25px rgba(255,165,0,0.5), 0 0 50px rgba(255,165,0,0.15); }
+  50%      { box-shadow:0 0 45px rgba(255,165,0,0.9), 0 0 80px rgba(255,165,0,0.35); }
+}
 #start-btn:hover { transform:translateY(-3px) scale(1.04); }
 #start-btn:active { transform:scale(.97); }
-#diff-label { color:rgba(255,255,255,0.9); font-size:1rem; margin:14px 0 8px; font-family:'Fredoka One',cursive; letter-spacing:1px; }
-#diff-row { display:flex; gap:10px; justify-content:center; margin-bottom:10px; }
-.diff-btn { padding:10px 20px; border-radius:30px; border:3px solid rgba(255,255,255,0.3); background:rgba(255,255,255,0.12); color:white; font-family:'Fredoka One',cursive; font-size:1rem; cursor:pointer; transition:all .2s; }
-.diff-btn:hover { transform:scale(1.06); background:rgba(255,255,255,0.22); }
-.diff-btn.selected { background:rgba(255,255,255,0.35); border-color:rgba(255,255,255,0.9); transform:scale(1.08); box-shadow:0 4px 20px rgba(255,255,255,0.3); }
-#diff-desc { color:rgba(255,255,255,0.75); font-size:0.85rem; margin-bottom:10px; min-height:20px; }
-#creator { margin-top:18px; font-family:'Fredoka One',cursive; font-size:.85rem; color:rgba(255,255,255,.55); letter-spacing:1px; }
-#music-toggle { position:absolute; bottom:20px; right:20px; background:rgba(255,255,255,.15); border:2px solid rgba(255,255,255,.3); border-radius:50px; padding:7px 16px; font-family:'Fredoka One',cursive; font-size:.85rem; color:white; cursor:pointer; backdrop-filter:blur(6px); transition:background .2s; }
+
+#creator { margin-top:12px; font-family:'Fredoka One',cursive; font-size:.78rem; color:rgba(255,255,255,0.25); letter-spacing:1px; }
+#music-toggle {
+  position:absolute; bottom:18px; right:18px;
+  background:rgba(255,215,0,0.08); border:1px solid rgba(255,215,0,0.25); border-radius:50px;
+  padding:7px 16px; font-family:'Fredoka One',cursive; font-size:.82rem;
+  color:rgba(255,215,0,0.7); cursor:pointer; backdrop-filter:blur(6px); transition:all .2s;
+}
+#music-toggle:hover { background:rgba(255,215,0,0.18); color:#FFD700; }
 #music-toggle:hover { background:rgba(255,255,255,.25); }
 </style>
 </head>
@@ -156,21 +269,53 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 <!-- ══ PANTALLA DE INICIO ══ -->
 <div id="start-screen">
   <div id="start-card">
-    <span id="start-emoji">🏆</span>
-    <div id="start-title">🦜 El Tesoro<br>Matemático</div>
-    <div id="start-sub">4° y 5° Primaria — Multiplicación, División y Fracciones</div>
+    <div id="start-title">🦜 El Tesoro Matemático</div>
     <div class="teams-row">
       <div class="team-badge">🔵 Equipo 1</div>
       <div class="team-badge">VS</div>
       <div class="team-badge">🔴 Equipo 2</div>
     </div>
-    <div id="diff-label">⚓ Selecciona la dificultad:</div>
+
+    <!-- DIFICULTAD -->
+    <div class="cfg-label">⚓ Dificultad</div>
     <div id="diff-row">
       <button class="diff-btn selected" id="diff-easy"   onclick="setDiff('easy')">🟢 Fácil</button>
       <button class="diff-btn"          id="diff-medium" onclick="setDiff('medium')">🟡 Intermedio</button>
       <button class="diff-btn"          id="diff-hard"   onclick="setDiff('hard')">🔴 Difícil</button>
     </div>
-    <div id="diff-desc">Tablas del 1 al 5 · Divisiones sencillas</div>
+    <div id="diff-desc">Tablas del 1 al 15 · Multiplicación y división directa</div>
+
+    <!-- TEMAS -->
+    <div class="cfg-label">📋 Seleccionar temas
+      <button id="sel-all-btn" onclick="selAll()">✅ Todos</button>
+      <button id="sel-none-btn" onclick="selNone()">❌ Ninguno</button>
+    </div>
+    <div id="topics-grid">
+      <div class="grade-group">
+        <div class="grade-title">📚 Primaria</div>
+        <label class="topic-cb"><input type="checkbox" value="suma" checked> ➕ Suma</label>
+        <label class="topic-cb"><input type="checkbox" value="resta" checked> ➖ Resta</label>
+        <label class="topic-cb"><input type="checkbox" value="multi" checked> ✖️ Multiplicación</label>
+        <label class="topic-cb"><input type="checkbox" value="div" checked> ➗ División</label>
+      </div>
+      <div class="grade-group">
+        <div class="grade-title">📗 Secundaria (6°-8°)</div>
+        <label class="topic-cb"><input type="checkbox" value="potencias"> 🔢 Potencias</label>
+        <label class="topic-cb"><input type="checkbox" value="raices"> √ Raíces cuadradas</label>
+        <label class="topic-cb"><input type="checkbox" value="fracciones"> 🍕 Fracciones</label>
+        <label class="topic-cb"><input type="checkbox" value="porcentajes"> 📊 Porcentajes</label>
+        <label class="topic-cb"><input type="checkbox" value="algebra"> 🔤 Álgebra básica</label>
+      </div>
+      <div class="grade-group">
+        <div class="grade-title">🎓 Bachillerato (9°-11°)</div>
+        <label class="topic-cb"><input type="checkbox" value="algebra2"> 📈 Álgebra intermedia</label>
+        <label class="topic-cb"><input type="checkbox" value="ecuaciones"> ⚖️ Ecuaciones 2° grado</label>
+        <label class="topic-cb"><input type="checkbox" value="trigono"> 📐 Trigonometría</label>
+        <label class="topic-cb"><input type="checkbox" value="logaritmos"> 🔬 Logaritmos</label>
+      </div>
+    </div>
+    <div id="topics-warn" style="display:none">⚠️ Selecciona al menos un tema</div>
+
     <button id="start-btn" onclick="startMusic()">▶ ¡JUGAR!</button>
     <div id="creator">✨ Creado por Sergio Arango</div>
   </div>
@@ -300,25 +445,39 @@ let ws, G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'' };
 
   let selectedDiff = 'easy';
   const diffDesc = {
-    easy:   'Tablas del 1 al 15 · Multiplicación y división directa',
-    medium: 'Tablas del 1 al 20 · División e incógnitas',
-    hard:   'Tablas del 1 al 25 · Incógnitas · Cuadrados · 3 factores'
+    easy:   'Números pequeños · Sin incógnitas',
+    medium: 'Números medianos · Con incógnitas',
+    hard:   'Números grandes · Máximo desafío'
   };
   function setDiff(d) {
     selectedDiff = d;
-    ['easy','medium','hard'].forEach(x => {
-      document.getElementById('diff-'+x).classList.toggle('selected', x===d);
-    });
+    ['easy','medium','hard'].forEach(x =>
+      document.getElementById('diff-'+x).classList.toggle('selected', x===d)
+    );
     document.getElementById('diff-desc').textContent = diffDesc[d];
   }
 
+  function selAll()  { document.querySelectorAll('#topics-grid input[type=checkbox]').forEach(c=>c.checked=true);  }
+  function selNone() { document.querySelectorAll('#topics-grid input[type=checkbox]').forEach(c=>c.checked=false); }
+
+  function getTopics() {
+    return [...document.querySelectorAll('#topics-grid input[type=checkbox]:checked')].map(c=>c.value);
+  }
+
   function startGame() {
-    send({ type: 'startGame', difficulty: selectedDiff });
+    const topics = getTopics();
+    if(topics.length === 0) {
+      document.getElementById('topics-warn').style.display = 'block';
+      return;
+    }
+    document.getElementById('topics-warn').style.display = 'none';
+    send({ type: 'startGame', difficulty: selectedDiff, topics });
     document.getElementById('lobby').classList.add('hidden');
   }
 
   function startSolo() {
-    send({ type: 'startGame', difficulty: selectedDiff });
+    const topics = getTopics();
+    send({ type: 'startGame', difficulty: selectedDiff, topics });
     document.getElementById('lobby').classList.add('hidden');
   }
 
@@ -1434,11 +1593,17 @@ window.addEventListener('load', () => {
 ══════════════════════════════════════ */
 function spawnStars() {
   const s = document.getElementById('start-screen');
-  for (let i = 0; i < 18; i++) {
+  const cols = ['#FFD700','#FFA500','#c084fc','#7dd3fc','#4ade80','#ffffff','#f472b6'];
+  for (let i = 0; i < 35; i++) {
     const el = document.createElement('div');
     el.className = 'star';
-    const size = 8 + Math.random() * 20;
-    el.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;animation-duration:${4+Math.random()*6}s;animation-delay:${Math.random()*5}s;`;
+    const size = 3 + Math.random() * 9;
+    const col  = cols[Math.floor(Math.random()*cols.length)];
+    el.style.cssText =
+      `width:${size}px;height:${size}px;left:${Math.random()*100}%;bottom:-10px;` +
+      `animation-duration:${6+Math.random()*10}s;animation-delay:-${Math.random()*14}s;` +
+      `background:${col};box-shadow:0 0 ${size*2}px ${col},0 0 ${size*5}px ${col}55;` +
+      `opacity:${0.4+Math.random()*0.6};`;
     s.appendChild(el);
   }
 }
