@@ -422,8 +422,11 @@ wss.on('connection', (ws) => {
   ws.on('message', (raw) => {
     let msg;
     try { msg = JSON.parse(raw); } catch { return; }
+    if (!msg || !msg.type) return;
 
     switch (msg.type) {
+
+      case 'ping': return; // heartbeat — no hacer nada
 
       case 'register':
         clients.set(ws, { type: msg.role });
@@ -534,3 +537,7 @@ httpServer.listen(PORT, '0.0.0.0', () => {
 });
 
 // El juego espera a que alguien presione Iniciar
+
+// ── Evitar que errores no capturados tiren el servidor ──
+process.on('uncaughtException',  err => console.error('[uncaughtException]', err.message));
+process.on('unhandledRejection', err => console.error('[unhandledRejection]', err));

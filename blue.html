@@ -283,7 +283,7 @@ function connectWS() {
     }, 20000);
   };
 
-  ws.onmessage = (e) => handle(JSON.parse(e.data));
+  ws.onmessage = (e) => { try { handle(JSON.parse(e.data)); } catch(err) {} };
 
   ws.onerror = () => { ws.close(); };
 
@@ -317,6 +317,13 @@ function handle(msg) {
       const po = document.getElementById('pause-overlay');
       if (msg.paused) po.classList.add('show');
       else po.classList.remove('show');
+      break;
+
+    case 'hostLeft':
+      document.getElementById('pause-title').textContent = 'Sesión terminada';
+      document.getElementById('pause-sub').textContent = 'El profesor cerró el juego';
+      document.getElementById('pause-emoji').textContent = '🏴‍☠️';
+      document.getElementById('pause-overlay').classList.add('show');
       break;
 
     case 'timer':

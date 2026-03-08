@@ -266,20 +266,39 @@ const TEAM = 'r';
 const TS   = 38;
 let ws, buf = '';
 
+let pingIntervalR = null;
+
 function connectWS() {
   const host = window.location.host;
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
   ws = new WebSocket(protocol + host);
+
   ws.onopen = () => {
     ws.send(JSON.stringify({ type:'register', role:'red' }));
     setStatus('✅ Conectado', true);
+    clearInterval(pingIntervalR);
+    pingIntervalR = setInterval(() => {
+      if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type:'ping' }));
+    }, 20000);
   };
-  ws.onmessage = (e) => handle(JSON.parse(e.data));
+
+  ws.onmessage = (e) => {
+    try { handle(JSON.parse(e.data)); } catch(err) {}
+  };
+
+  ws.onerror = () => { ws.close(); };
+
   ws.onclose = () => {
+    clearInterval(pingIntervalR);
     setStatus('🔄 Reconectando...', false);
-    setTimeout(connectWS, 2000);
+    setTimeout(connectWS, 1500);
   };
 }
+
+// Reconectar cuando la pestaña vuelva a ser visible
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && (!ws || ws.readyState !== 1)) connectWS();
+});
 
 function send(obj) { if(ws && ws.readyState===1) ws.send(JSON.stringify(obj)); }
 
@@ -297,6 +316,13 @@ function handle(msg) {
       const po = document.getElementById('pause-overlay');
       if (msg.paused) po.classList.add('show');
       else po.classList.remove('show');
+      break;
+
+    case 'hostLeft':
+      document.getElementById('pause-title').textContent = 'Sesión terminada';
+      document.getElementById('pause-sub').textContent = 'El profesor cerró el juego';
+      document.getElementById('pause-emoji').textContent = '🏴‍☠️';
+      document.getElementById('pause-overlay').classList.add('show');
       break;
 
     case 'timer':
