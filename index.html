@@ -320,7 +320,7 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
     <div id="creator">✨ Creado por Sergio Arango</div>
   </div>
   <button id="music-toggle" onclick="toggleMusic()">🎵 Música: ON</button>
-  <audio id="bg-audio" src="/music.mp3" loop preload="auto"></audio>
+  <audio id="bg-audio" src="/music.mp3" loop preload="auto" crossorigin="anonymous"></audio>
 </div>
 
 <div id="topbar">
@@ -1562,31 +1562,64 @@ window.addEventListener('load', () => {
   window.addEventListener('resize', resizeCnv);
   animLoop();
   spawnStars();
-  initMusic();
+  setupAudio();
   connectWS();
+});
 
-  // Arrancar música al primer clic/toque en cualquier parte
-  function tryAutoPlay() {
-    const a = document.getElementById('bg-audio');
-    if (a && musicOn) {
-      a.volume = 0.45;
+function setupAudio() {
+  const a = document.getElementById('bg-audio');
+  if (!a) return;
+
+  // Configurar para streaming continuo sin cortes
+  a.volume = 0.45;
+  a.loop = true;
+  a.preload = 'auto';
+
+  // Cuando se carga suficiente para reproducir sin cortes
+  a.addEventListener('canplaythrough', () => {
+    if (musicOn) a.play().catch(() => {});
+  }, { once: true });
+
+  // Si se detiene inesperadamente, reiniciar
+  a.addEventListener('pause', () => {
+    if (musicOn && !a.ended && document.hasFocus()) {
+      setTimeout(() => { if (musicOn) a.play().catch(() => {}); }, 300);
+    }
+  });
+
+  // Si hay error de red, recargar y continuar
+  a.addEventListener('error', () => {
+    if (musicOn) {
+      setTimeout(() => {
+        a.load();
+        a.play().catch(() => {});
+      }, 1000);
+    }
+  });
+
+  // Si se queda sin buffer (stall), esperar y reanudar
+  a.addEventListener('stalled', () => {
+    if (musicOn) setTimeout(() => a.play().catch(() => {}), 800);
+  });
+  a.addEventListener('waiting', () => {
+    // No hacer nada — el navegador retomará solo cuando haya buffer
+  });
+
+  // Forzar carga
+  a.load();
+
+  // Al primer clic del usuario (requerido por navegadores)
+  function tryPlay() {
+    if (musicOn) {
       a.play().then(() => {
-        document.removeEventListener('click', tryAutoPlay);
-        document.removeEventListener('touchstart', tryAutoPlay);
-        document.removeEventListener('keydown', tryAutoPlay);
+        document.removeEventListener('click', tryPlay);
+        document.removeEventListener('touchstart', tryPlay);
       }).catch(() => {});
     }
   }
-  // Intentar inmediato (funciona en algunos navegadores)
-  setTimeout(() => {
-    const a = document.getElementById('bg-audio');
-    if (a && musicOn) a.play().catch(() => {});
-  }, 500);
-  // Si no, al primer toque
-  document.addEventListener('click', tryAutoPlay);
-  document.addEventListener('touchstart', tryAutoPlay);
-  document.addEventListener('keydown', tryAutoPlay);
-});
+  document.addEventListener('click', tryPlay);
+  document.addEventListener('touchstart', tryPlay);
+}
 
 /* ══════════════════════════════════════
    PANTALLA DE INICIO
@@ -1612,7 +1645,6 @@ function startMusic(){
   const ss = document.getElementById('start-screen');
   ss.classList.add('hide');
   setTimeout(() => ss.style.display = 'none', 650);
-  if (bgMusic && bgMusic.state === 'suspended') bgMusic.resume();
   playMusic();
 }
 
@@ -1622,11 +1654,11 @@ function startMusic(){
 ══════════════════════════════════════ */
 let musicOn = true;
 
-function initMusic() {}
-
 function playMusic() {
   const a = document.getElementById('bg-audio');
-  if (a && musicOn) { a.volume = 0.45; a.play().catch(()=>{}); }
+  if (!a || !musicOn) return;
+  a.volume = 0.45;
+  a.play().catch(() => {});
 }
 
 function stopMusic() {
