@@ -419,10 +419,13 @@ function handleMsg(msg) {
       document.getElementById('wsr').textContent  = msg.rnd;
       document.getElementById('wsb').textContent  = msg.cb;
       document.getElementById('wsr2').textContent = msg.cr;
-      // Explosion on the losing ship first, then fullscreen victory
-      const loseX = ib ? W*0.78 : W*0.22;
-      for(let i=0;i<4;i++) setTimeout(()=>spawnExplosion(loseX+rndF(-40,40), cnv.height*0.55+rndF(-30,30)), i*150);
-      setTimeout(()=>{ winEl.classList.add('show'); startWinExplosion(winColor3); }, 600);
+      // Ball snaps to losing ship, then explodes
+      ballProgress = ib ? 1.0 : 0.0;
+      const loseX = ib ? redX : blueX;  // can't use redX/blueX here, use canvas width
+      const loseXpx = ib ? cnv.width*0.78 : cnv.width*0.22;
+      const loseYpx = cnv.height*0.68;
+      for(let i=0;i<5;i++) setTimeout(()=>spawnExplosion(loseXpx+rndF(-50,50), loseYpx+rndF(-60,20)), i*120);
+      setTimeout(()=>{ winEl.classList.add('show'); startWinExplosion(winColor3); }, 700);
       break;
     }
 
@@ -1039,13 +1042,15 @@ function drawScene() {
   // Smooth slide toward target (easing like the old rope)
   ballDisplayX += (ballProgress - ballDisplayX) * 0.06;
 
-  const bX = blueX + (redX - blueX) * ballDisplayX;
+  // Track endpoints = cannon mouths of each ship
+  const trackL = blueX + W*0.095;
+  const trackR = redX  - W*0.095;
+  // Ball position maps 0→trackL, 1→trackR
+  const bX = trackL + (trackR - trackL) * ballDisplayX;
   const bY = WY + 22; // sits on the water
 
   // ── PROGRESS TRACK (like the rope, but a sea lane) ──
   const trackY = bY;
-  const trackL = blueX + W*0.09;
-  const trackR = redX  - W*0.09;
 
   // Track background (dark water lane)
   cx.beginPath();
