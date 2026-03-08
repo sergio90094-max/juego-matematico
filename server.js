@@ -59,29 +59,31 @@ function genByTopic(topic, d) {
        SUMA  — 8 tipos de ejercicio
     ════════════════════════════════ */
     case 'suma': {
-      const t = rnd(0, E?4 : H?7:5);
+      // Rangos claros por dificultad
+      const [lo,hi] = E?[1,30] : H?[100,9999] : [10,999];
+      const t = rnd(0, 6);
       if(t===0){ // a+b directa
-        a=rnd(E?1:E?10:100, E?30:H?9999:999); b=rnd(E?1:H?100:10, E?30:H?9999:999);
+        a=rnd(lo,hi); b=rnd(lo,hi);
         ans=a+b; text=a+' + '+b+' = ?';
       } else if(t===1){ // incógnita sumando
-        a=rnd(E?5:10, E?50:H?500:200); b=rnd(E?1:H?50:10, E?20:H?400:150);
+        a=rnd(lo,hi); b=rnd(lo,hi);
         ans=b; text=a+' + ? = '+(a+b);
       } else if(t===2){ // incógnita primer sumando
-        a=rnd(E?5:10, E?50:H?500:200); b=rnd(E?1:H?50:10, E?20:H?400:150);
+        a=rnd(lo,hi); b=rnd(lo,hi);
         ans=a; text='? + '+b+' = '+(a+b);
       } else if(t===3){ // 3 sumandos
-        a=rnd(1,E?20:H?999:99); b=rnd(1,E?20:H?999:99); c=rnd(1,E?20:H?999:99);
+        a=rnd(lo,Math.min(hi,E?20:H?999:200)); b=rnd(lo,Math.min(hi,E?20:H?999:200)); c=rnd(lo,Math.min(hi,E?20:H?999:200));
         ans=a+b+c; text=a+' + '+b+' + '+c+' = ?';
-      } else if(t===4){ // suma con cero
-        a=rnd(1,E?100:H?9999:999);
-        ans=a; text=a+' + 0 = ?';
-      } else if(t===5){ // suma de múltiplos de 10
-        a=rnd(1,E?9:99)*10; b=rnd(1,E?9:99)*10;
+      } else if(t===4){ // múltiplos de 10
+        a=rnd(1,E?9:H?90:30)*10; b=rnd(1,E?9:H?90:30)*10;
         ans=a+b; text=a+' + '+b+' = ?';
-      } else if(t===6){ // completar al siguiente 100
-        a=rnd(1,99)*10; ans=100-a; text=a+' + ? = 100';
+      } else if(t===5){ // completar a número redondo
+        const meta = E?100 : H?10000 : 1000;
+        a=rnd(E?10:H?1000:100, E?90:H?9000:900);
+        a=Math.round(a/10)*10; ans=meta-a; text=a+' + ? = '+meta;
       } else { // suma de 4 números
-        a=rnd(1,H?999:99); b=rnd(1,H?999:99); c=rnd(1,H?999:99); const dd=rnd(1,H?999:99);
+        a=rnd(lo,E?15:H?500:100); b=rnd(lo,E?15:H?500:100);
+        c=rnd(lo,E?15:H?500:100); const dd=rnd(lo,E?15:H?500:100);
         ans=a+b+c+dd; text=a+' + '+b+' + '+c+' + '+dd+' = ?';
       }
       break;
@@ -124,18 +126,27 @@ function genByTopic(topic, d) {
        MULTIPLICACIÓN — 10 tipos
     ════════════════════════════════ */
     case 'multi': {
-      const max = E?15:H?25:20;
-      const t = rnd(0, E?4:H?9:6);
-      if(t===0){ a=rnd(2,max); b=rnd(2,max); ans=a*b; text=a+' × '+b+' = ?'; }
-      else if(t===1){ a=rnd(2,max); b=rnd(2,max); ans=a; text='? × '+b+' = '+(a*b); }
-      else if(t===2){ a=rnd(2,max); b=rnd(2,max); ans=b; text=a+' × ? = '+(a*b); }
-      else if(t===3){ c=rnd(2,E?5:8); a=rnd(2,E?8:max); b=rnd(2,E?8:max); ans=a*b*c; text=a+' × '+b+' × '+c+' = ?'; }
-      else if(t===4){ a=rnd(2,10); ans=a*10; text=a+' × 10 = ?'; }
-      else if(t===5){ a=rnd(2,10); ans=a*100; text=a+' × 100 = ?'; }
-      else if(t===6){ a=rnd(11,19); b=rnd(2,9); ans=a*b; text=a+' × '+b+' = ?'; }
-      else if(t===7){ a=rnd(2,max); b=rnd(2,max); ans=a; text='Si '+b+' × x = '+(a*b)+', entonces x = ?'; }
-      else if(t===8){ a=rnd(2,12); ans=a*a; text=a+'² = ?'; }
-      else { a=rnd(5,max); b=rnd(2,5); c=rnd(2,5); ans=a*b*c; text='('+a+' × '+b+') × '+c+' = ?'; }
+      // Rangos por dificultad
+      const [lo,hi] = E?[2,15] : H?[6,25] : [2,20];
+      const t = rnd(0, 7);
+      if(t===0){ // directa
+        a=rnd(lo,hi); b=rnd(lo,hi); ans=a*b; text=a+' × '+b+' = ?';
+      } else if(t===1){ // incógnita izquierda
+        a=rnd(lo,hi); b=rnd(lo,hi); ans=a; text='? × '+b+' = '+(a*b);
+      } else if(t===2){ // incógnita derecha
+        a=rnd(lo,hi); b=rnd(lo,hi); ans=b; text=a+' × ? = '+(a*b);
+      } else if(t===3){ // 3 factores
+        a=rnd(lo,E?8:hi); b=rnd(lo,E?8:hi); c=rnd(2,E?5:8);
+        ans=a*b*c; text=a+' × '+b+' × '+c+' = ?';
+      } else if(t===4){ // ×10
+        a=rnd(lo,hi); ans=a*10; text=a+' × 10 = ?';
+      } else if(t===5){ // ×100 — solo medium/hard
+        a=rnd(lo,hi); ans=E?a*10:a*100; text=a+(E?' × 10':' × 100')+' = ?';
+      } else if(t===6){ // "Si b×x=..." forma problema
+        a=rnd(lo,hi); b=rnd(lo,hi); ans=a; text='Si '+b+' × x = '+(a*b)+',  x = ?';
+      } else { // cuadrado (solo medium/hard)
+        a=rnd(E?2:H?8:4, E?9:H?15:12); ans=a*a; text=a+'² = ?';
+      }
       break;
     }
 
@@ -182,14 +193,13 @@ function genByTopic(topic, d) {
     ════════════════════════════════ */
     case 'raices': {
       const maxR = E?10:H?20:15;
-      const t = rnd(0, E?2:H?6:4);
+      const t = rnd(0, E?2:H?5:4);
       if(t===0){ a=rnd(2,maxR); ans=a; text='√'+(a*a)+' = ?'; }
-      else if(t===1){ a=rnd(2,maxR); ans=a*a; text='√? = '+a; }
-      else if(t===2){ a=rnd(2,10); ans=a*a; text='¿Cuál número al cuadrado da '+(a*a)+'?  √'+(a*a)+' = ?'; }
-      else if(t===3){ a=rnd(2,maxR); text='√'+(a*a)+' + '+(a*a)+' = ?'; ans=2*a; }
+      else if(t===1){ a=rnd(2,maxR); ans=a*a; text='Si √x = '+a+',  x = ?'; }
+      else if(t===2){ a=rnd(2,10); ans=a; text='¿Cuál número al cuadrado da '+(a*a)+'?'; }
+      else if(t===3){ a=rnd(2,maxR); ans=2*a; text='√'+(a*a)+' + √'+(a*a)+' = ?'; }
       else if(t===4){ a=rnd(2,10); b=rnd(2,10); ans=a+b; text='√'+(a*a)+' + √'+(b*b)+' = ?'; }
-      else if(t===5){ a=rnd(2,maxR); b=rnd(1,a-1); ans=a-b; text='√'+(a*a)+' - √'+(b*b)+' = ?'; }
-      else { a=rnd(2,maxR); ans=a*a*a*a; text='(√'+(a*a)+')² = ?'; }
+      else { a=rnd(2,maxR); b=rnd(1,a-1); ans=a-b; text='√'+(a*a)+' - √'+(b*b)+' = ?'; }
       break;
     }
 
@@ -258,9 +268,9 @@ function genByTopic(topic, d) {
     ════════════════════════════════ */
     case 'algebra': {
       const t = rnd(0, E?4:H?9:7);
-      const xval = E?rnd(1,10):H?rnd(3,25):rnd(2,15);
-      const coef = E?1:H?rnd(3,9):rnd(2,6);
-      const bval = E?rnd(1,10):H?rnd(5,20):rnd(1,12);
+      const xval = E?rnd(1,15):H?rnd(5,30):rnd(2,20);
+      const coef = E?rnd(2,5):H?rnd(4,10):rnd(2,7);
+      const bval = E?rnd(1,15):H?rnd(5,25):rnd(1,15);
       if(t===0){ ans=xval; text='x + '+bval+' = '+(xval+bval)+',  x = ?'; }
       else if(t===1){ ans=xval; text='x - '+bval+' = '+(xval-bval)+',  x = ?'; }
       else if(t===2){ ans=xval; text=coef+'x = '+(coef*xval)+',  x = ?'; }
