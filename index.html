@@ -419,13 +419,21 @@ function handleMsg(msg) {
       document.getElementById('wsr').textContent  = msg.rnd;
       document.getElementById('wsb').textContent  = msg.cb;
       document.getElementById('wsr2').textContent = msg.cr;
-      // Ball snaps to losing ship, then explodes
+      // Ball snaps to losing ship, BOOM, then fullscreen victory
       ballProgress = ib ? 1.0 : 0.0;
-      const loseX = ib ? redX : blueX;  // can't use redX/blueX here, use canvas width
-      const loseXpx = ib ? cnv.width*0.78 : cnv.width*0.22;
-      const loseYpx = cnv.height*0.68;
-      for(let i=0;i<5;i++) setTimeout(()=>spawnExplosion(loseXpx+rndF(-50,50), loseYpx+rndF(-60,20)), i*120);
-      setTimeout(()=>{ winEl.classList.add('show'); startWinExplosion(winColor3); }, 700);
+      ballDisplayX = ballProgress; // snap immediately
+      const loseXpx = ib ? cnv.width*0.785 : cnv.width*0.215;
+      const loseYpx = cnv.height*0.52;
+      // Wave of explosions on the losing ship
+      const exTimes = [0, 100, 220, 350, 480, 600, 700];
+      exTimes.forEach((t,i) => setTimeout(() => {
+        spawnExplosion(
+          loseXpx + rndF(-60, 60),
+          loseYpx + rndF(-80, 40)
+        );
+      }, t));
+      // Fullscreen victory after explosions
+      setTimeout(()=>{ winEl.classList.add('show'); startWinExplosion(winColor3); }, 1400);
       break;
     }
 
