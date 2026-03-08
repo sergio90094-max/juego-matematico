@@ -14,6 +14,8 @@ const PORT = process.env.PORT || 3000;
 /* ══════════════════════════════════════
    ESTADO DEL JUEGO (centralizado)
 ══════════════════════════════════════ */
+let gameDifficulty = 'easy'; // 'easy' | 'medium' | 'hard'  ← debe ir ANTES de genQ
+
 function freshState() {
   const q = genQ();
   return {
@@ -32,7 +34,6 @@ function freshState() {
 let G = freshState();
 let timerInterval = null;
 let gameStarted = false;
-let gameDifficulty = 'easy'; // 'easy' | 'medium' | 'hard'
 let gamePaused = false;
 
 /* ══════════════════════════════════════
