@@ -724,7 +724,7 @@ function fireCannonball(redScored) {
   // Move ball toward the enemy of whoever scored
   // redScored=true  → red scored → ball moves LEFT toward blue  (progress decreases)
   // redScored=false → blue scored → ball moves RIGHT toward red (progress increases)
-  const step = 0.10; // 10 steps to win (WT=50, MA=5 → 10 correct answers)
+  const step = 0.05; // 10 steps from center to win (0.5→1.0 in 10 steps)
   if (redScored) {
     ballProgress = Math.max(0, ballProgress - step);
   } else {
