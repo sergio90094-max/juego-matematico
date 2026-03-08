@@ -1006,19 +1006,154 @@ function drawScene() {
   cx.fillStyle=sunG; cx.beginPath(); cx.arc(W*0.88,H*0.1,40,0,Math.PI*2); cx.fill();
 
   // ── OCEAN ──
+  // ── OCÉANO base ──
   const seaG = cx.createLinearGradient(0,WY,0,H);
-  seaG.addColorStop(0,'#1a7abf'); seaG.addColorStop(0.4,'#0f5a8a'); seaG.addColorStop(1,'#073a5c');
+  seaG.addColorStop(0,'#29B6F6');
+  seaG.addColorStop(0.3,'#0288D1');
+  seaG.addColorStop(0.7,'#01579B');
+  seaG.addColorStop(1,'#002244');
   cx.fillStyle=seaG; cx.fillRect(0,WY,W,H-WY);
 
-  // Wave lines
-  for(let wi=0;wi<5;wi++){
-    const wphase = (AF*1.2 + wi*70) % W;
-    const wy2 = WY + wi*12 + Math.sin(AF*0.04+wi)*3;
+  // ── OLAS CARTOON estilo imagen ──
+  function dibujarOla(cx, ox, baseY, W, H) {
+    // W = ancho de la ola, H = altura máxima
+    // Forma: valle → sube → curl izquierdo → baja → sube → curl derecho → baja → valle
     cx.beginPath();
-    cx.moveTo(-W+wphase, wy2);
-    cx.quadraticCurveTo(-W/2+wphase+20, wy2-7, wphase, wy2);
-    cx.quadraticCurveTo(W/4+wphase+20, wy2-7, W/2+wphase, wy2);
-    cx.strokeStyle=`rgba(255,255,255,${0.2-wi*0.03})`; cx.lineWidth=2; cx.stroke();
+    cx.moveTo(ox, baseY);
+    // PRIMERA OLA: sube y se curla a la derecha
+    cx.bezierCurveTo(
+      ox + W*0.06, baseY - H*0.4,
+      ox + W*0.12, baseY - H*0.85,
+      ox + W*0.20, baseY - H*1.0   // pico izquierdo
+    );
+    cx.bezierCurveTo(
+      ox + W*0.26, baseY - H*1.12,
+      ox + W*0.34, baseY - H*1.10,
+      ox + W*0.32, baseY - H*0.80  // curl hacia adentro
+    );
+    cx.bezierCurveTo(
+      ox + W*0.30, baseY - H*0.58,
+      ox + W*0.36, baseY - H*0.42,
+      ox + W*0.44, baseY - H*0.48  // valle entre olas
+    );
+    // SEGUNDA OLA
+    cx.bezierCurveTo(
+      ox + W*0.50, baseY - H*0.52,
+      ox + W*0.54, baseY - H*0.80,
+      ox + W*0.60, baseY - H*0.95  // pico derecho
+    );
+    cx.bezierCurveTo(
+      ox + W*0.65, baseY - H*1.08,
+      ox + W*0.74, baseY - H*1.08,
+      ox + W*0.72, baseY - H*0.76  // curl hacia adentro
+    );
+    cx.bezierCurveTo(
+      ox + W*0.70, baseY - H*0.54,
+      ox + W*0.78, baseY - H*0.38,
+      ox + W*0.88, baseY - H*0.32  // bajada suave
+    );
+    cx.bezierCurveTo(
+      ox + W*0.94, baseY - H*0.20,
+      ox + W*0.98, baseY - H*0.08,
+      ox + W,      baseY
+    );
+    cx.lineTo(ox + W, baseY + H*0.6);
+    cx.lineTo(ox,     baseY + H*0.6);
+    cx.closePath();
+
+    // Relleno con gradiente cyan
+    const g = cx.createLinearGradient(ox, baseY - H*1.1, ox, baseY + H*0.3);
+    g.addColorStop(0.0, '#00E5FF');
+    g.addColorStop(0.2, '#00BCD4');
+    g.addColorStop(0.6, '#0097A7');
+    g.addColorStop(1.0, '#006064');
+    cx.fillStyle = g;
+    cx.fill();
+
+    // Contorno
+    cx.strokeStyle = '#006080';
+    cx.lineWidth = 2;
+    cx.stroke();
+
+    // ── Brillo interior (línea clara dentro de la ola) ──
+    cx.beginPath();
+    cx.moveTo(ox + W*0.10, baseY - H*0.35);
+    cx.bezierCurveTo(
+      ox + W*0.15, baseY - H*0.75,
+      ox + W*0.21, baseY - H*0.88,
+      ox + W*0.27, baseY - H*0.82
+    );
+    cx.bezierCurveTo(
+      ox + W*0.33, baseY - H*0.70,
+      ox + W*0.40, baseY - H*0.38,
+      ox + W*0.48, baseY - H*0.40
+    );
+    cx.bezierCurveTo(
+      ox + W*0.54, baseY - H*0.42,
+      ox + W*0.58, baseY - H*0.70,
+      ox + W*0.63, baseY - H*0.82
+    );
+    cx.bezierCurveTo(
+      ox + W*0.69, baseY - H*0.90,
+      ox + W*0.74, baseY - H*0.72,
+      ox + W*0.80, baseY - H*0.28
+    );
+    cx.strokeStyle = 'rgba(100,240,255,0.55)';
+    cx.lineWidth = 3;
+    cx.lineCap = 'round';
+    cx.lineJoin = 'round';
+    cx.stroke();
+
+    // ── Espuma blanca en el curl izquierdo ──
+    cx.beginPath();
+    cx.moveTo(ox + W*0.17, baseY - H*0.88);
+    cx.bezierCurveTo(
+      ox + W*0.22, baseY - H*1.05,
+      ox + W*0.30, baseY - H*1.10,
+      ox + W*0.33, baseY - H*0.92
+    );
+    cx.strokeStyle = 'rgba(255,255,255,0.95)';
+    cx.lineWidth = 3.5;
+    cx.lineCap = 'round';
+    cx.stroke();
+
+    // ── Espuma blanca en el curl derecho ──
+    cx.beginPath();
+    cx.moveTo(ox + W*0.57, baseY - H*0.82);
+    cx.bezierCurveTo(
+      ox + W*0.61, baseY - H*0.98,
+      ox + W*0.69, baseY - H*1.04,
+      ox + W*0.73, baseY - H*0.88
+    );
+    cx.strokeStyle = 'rgba(255,255,255,0.90)';
+    cx.lineWidth = 3;
+    cx.stroke();
+
+    // ── Gotitas de espuma ──
+    cx.fillStyle = 'rgba(255,255,255,0.85)';
+    [
+      [W*0.13, H*0.72], [W*0.37, H*0.55], [W*0.42, H*0.38],
+      [W*0.55, H*0.44], [W*0.76, H*0.62], [W*0.84, H*0.28],
+      [W*0.93, H*0.18]
+    ].forEach(([dx, dy]) => {
+      cx.beginPath();
+      cx.arc(ox + dx, baseY - dy, 2.8, 0, Math.PI*2);
+      cx.fill();
+    });
+  }
+
+  // ── Fila trasera (pequeña, lenta) ──
+  const sz1 = W * 0.20;
+  for(let i = -1; i < 7; i++) {
+    const ox = i * sz1 - (AF * 1.0 % sz1);
+    dibujarOla(cx, ox, WY + sz1*0.38, sz1, sz1*0.40);
+  }
+
+  // ── Fila delantera (grande, rápida) ──
+  const sz2 = W * 0.27;
+  for(let i = -1; i < 5; i++) {
+    const ox = i * sz2 - (AF * 1.8 % sz2);
+    dibujarOla(cx, ox, WY + sz2*0.52, sz2, sz2*0.42);
   }
 
   // ── CENTER LINE (dashed) ──
