@@ -42,19 +42,6 @@ let gamePaused = false;
    tipo: 'screen' | 'blue' | 'red'
 ══════════════════════════════════════ */
 const clients = new Map(); // ws -> { type }
-const roleSockets = { screen: new Set(), blue: new Set(), red: new Set() };
-
-function removeFromRoleSockets(ws, role) {
-  if (role && roleSockets[role]) roleSockets[role].delete(ws);
-}
-
-function setClientRole(ws, role) {
-  const prev = clients.get(ws)?.type || null;
-  if (prev === role) return;
-  removeFromRoleSockets(ws, prev);
-  clients.set(ws, { type: role });
-  if (role && roleSockets[role]) roleSockets[role].add(ws);
-}
 
 /* ══════════════════════════════════════
    GENERADOR DE PREGUNTAS
@@ -439,19 +426,6 @@ function broadcast(msg, exclude) {
 }
 function broadcastAll(msg) { broadcast(msg, null); }
 function sendTo(ws, msg)   { if (ws.readyState===1) ws.send(JSON.stringify(msg)); }
-function sendToRole(role, msg) {
-  const raw = JSON.stringify(msg);
-  const bucket = roleSockets[role];
-  if (!bucket) return;
-  for (const ws of bucket) {
-    if (ws.readyState === 1) ws.send(raw);
-  }
-}
-function sendToTeamAndScreen(team, msg) {
-  const role = team === 'b' ? 'blue' : 'red';
-  sendToRole(role, msg);
-  sendToRole('screen', msg);
-}
 
 function sendState(ws) {
   sendTo(ws, {
@@ -563,13 +537,13 @@ function handleInput(team, digit) {
   const k = team === 'b' ? 'ib' : 'ir';
   if (G[k].length >= 4) return;
   G[k] += digit;
-  sendToTeamAndScreen(team, { type: 'input', team, value: G[k] });
+  broadcastAll({ type: 'input', team, value: G[k] });
 }
 
 function handleDelete(team) {
   const k = team === 'b' ? 'ib' : 'ir';
   G[k] = G[k].slice(0, -1);
-  sendToTeamAndScreen(team, { type: 'input', team, value: G[k] });
+  broadcastAll({ type: 'input', team, value: G[k] });
 }
 
 /* ══════════════════════════════════════
@@ -619,14 +593,10 @@ const httpServer = http.createServer((req, res) => {
 /* ══════════════════════════════════════
    WEBSOCKET SERVER
 ══════════════════════════════════════ */
-const wss = new WebSocketServer({ server: httpServer, perMessageDeflate: false });
+const wss = new WebSocketServer({ server: httpServer });
 
 wss.on('connection', (ws) => {
   clients.set(ws, { type: null });
-  if (ws._socket) {
-    ws._socket.setNoDelay(true);
-    ws._socket.setKeepAlive(true, 10000);
-  }
 
   ws.on('message', (raw) => {
     let msg;
@@ -638,7 +608,7 @@ wss.on('connection', (ws) => {
       case 'ping': return; // heartbeat — no hacer nada
 
       case 'register':
-        setClientRole(ws, msg.role);
+        clients.set(ws, { type: msg.role });
         if (msg.role === 'screen') {
           // Si el juego estaba en curso al reconectar el screen, reanudar
           if (gameStarted && !G.over) {
@@ -740,7 +710,6 @@ wss.on('connection', (ws) => {
         }, 8000);
       }
     }
-    removeFromRoleSockets(ws, info && info.type);
     clients.delete(ws);
     // Si no quedan clientes, reiniciar estado
     if (clients.size === 0) {

@@ -515,7 +515,7 @@ let ws, G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'' };
       clearInterval(pingInterval);
       pingInterval = setInterval(() => {
         if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type:'ping' }));
-      }, 20000);
+      }, 10000);
       // Mostrar indicador de conexión si hay un banner
       const cb = document.getElementById('conn-banner');
       if (cb) cb.style.display = 'none';
