@@ -373,9 +373,27 @@ function handle(msg) {
   }
 }
 
-function np(d) { send({ type:'input', team:TEAM, digit:d }); }
-function del()  { send({ type:'delete', team:TEAM }); }
+function np(d) {
+  // Mostrar inmediatamente sin esperar al servidor
+  if (buf.length < 4) {
+    buf += d;
+    document.getElementById('ans-val').textContent = buf || '?';
+  }
+  send({ type:'input', team:TEAM, digit:d });
+}
+function del() {
+  buf = buf.slice(0, -1);
+  document.getElementById('ans-val').textContent = buf || '?';
+  send({ type:'delete', team:TEAM });
+}
 function sub()  { send({ type:'submit', team:TEAM }); }
+
+// Soporte de teclado físico
+document.addEventListener('keydown', (e) => {
+  if (e.key >= '0' && e.key <= '9') { np(e.key); e.preventDefault(); }
+  else if (e.key === 'Backspace')    { del(); e.preventDefault(); }
+  else if (e.key === 'Enter')        { sub(); e.preventDefault(); }
+});
 
 function updateTimer(v) {
   const el = document.getElementById('timer-num');

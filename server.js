@@ -609,12 +609,23 @@ wss.on('connection', (ws) => {
 
       case 'register':
         clients.set(ws, { type: msg.role });
-        if (!gameStarted) {
-          sendTo(ws, { type: 'waiting' });
+        if (msg.role === 'screen') {
+          // Si el juego estaba en curso al reconectar el screen, reanudar
+          if (gameStarted && !G.over) {
+            sendState(ws);
+            if (!gamePaused && !timerInterval) startTimer();
+          } else if (!gameStarted) {
+            sendTo(ws, { type: 'waiting' });
+          } else {
+            sendState(ws);
+          }
         } else {
-          sendState(ws);
-          // If game paused, notify the reconnected player
-          if (gamePaused) sendTo(ws, { type: 'pause', paused: true });
+          if (!gameStarted) {
+            sendTo(ws, { type: 'waiting' });
+          } else {
+            sendState(ws);
+            if (gamePaused) sendTo(ws, { type: 'pause', paused: true });
+          }
         }
         console.log(`[+] Reconectado/Conectado: ${msg.role}`);
         // Only notify about actual players (not the screen itself)
@@ -668,16 +679,35 @@ wss.on('connection', (ws) => {
     const info = clients.get(ws);
     if (info) {
       console.log(`[-] Desconectado: ${info.type}`);
-      broadcastAll({ type: 'playerLeft', role: info.type });
-      // Si el profesor (pantalla) se desconecta, pausar y reiniciar el juego
+      // Solo notificar si era un jugador real (no la pantalla)
+      if (info.type === 'blue' || info.type === 'red') {
+        broadcastAll({ type: 'playerLeft', role: info.type });
+      }
+      // Si el profesor (pantalla) se desconecta, esperar 8s antes de reiniciar
+      // por si es un blip de red o recarga de página
       if (info.type === 'screen') {
+        // Pausar el timer durante el grace period sin alterar el estado
+        const savedTimer = timerInterval;
         clearInterval(timerInterval);
-        G = freshState();
-        gameStarted = false;
-        gamePaused = false;
-        // Notificar a los jugadores que la sesión terminó
-        setTimeout(() => broadcastAll({ type: 'hostLeft' }), 300);
-        console.log('[*] Profesor desconectado — juego reiniciado');
+        timerInterval = null;
+        const disconnectTime = Date.now();
+        console.log('[*] Profesor desconectado — esperando reconexión (8s)...');
+        setTimeout(() => {
+          // Si ya hay un screen nuevo conectado, no hacer nada
+          let screenBack = false;
+          for (const [, c] of clients) {
+            if (c.type === 'screen') { screenBack = true; break; }
+          }
+          if (!screenBack) {
+            G = freshState();
+            gameStarted = false;
+            gamePaused = false;
+            broadcastAll({ type: 'hostLeft' });
+            console.log('[*] Profesor no reconectó — juego reiniciado');
+          } else {
+            console.log('[*] Profesor reconectó — juego continúa');
+          }
+        }, 8000);
       }
     }
     clients.delete(ws);
