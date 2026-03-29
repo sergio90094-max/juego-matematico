@@ -375,7 +375,7 @@ function handle(msg) {
       showFb(' ','');
       break;
     case 'input':
-      if (msg.team === TEAM) { buf = msg.value; document.getElementById('ans-val').textContent = buf || '?'; }
+      // Ignorar eco propio — display ya es local e instantáneo
       break;
     case 'clearInput':
       if (msg.team === TEAM) { buf=''; document.getElementById('ans-val').textContent='?'; }
