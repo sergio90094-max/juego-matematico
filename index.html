@@ -102,9 +102,10 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 #rbtn:hover, #win-rbtn:hover { transform:translateY(-2px); }
 
 /* ── LOBBY OVERLAY ── */
-#lobby { position:fixed; inset:0; background:rgba(10,20,60,.88); display:flex; align-items:center; justify-content:center; z-index:300; backdrop-filter:blur(6px); transition:opacity .4s; }
+#lobby { position:fixed; inset:0; background:rgba(10,20,60,.88); display:flex; align-items:center; justify-content:center; z-index:300; backdrop-filter:blur(6px); transition:opacity .4s; padding:20px; overflow:auto; }
 #lobby.hidden { opacity:0; pointer-events:none; }
-#lcard { background:white; border-radius:22px; padding:34px 42px; text-align:center; max-width:400px; width:92%; box-shadow:0 20px 60px rgba(0,0,0,.5); }
+#lobby-wrap { width:min(1380px,100%); display:flex; align-items:center; justify-content:center; gap:28px; }
+#lcard { background:white; border-radius:22px; padding:34px 42px; text-align:center; max-width:400px; width:min(92vw,400px); box-shadow:0 20px 60px rgba(0,0,0,.5); position:relative; z-index:2; }
 #lemoji { font-size:3rem; display:block; margin-bottom:8px; }
 #ltitle { font-family:'Fredoka One',cursive; font-size:2rem; color:#1A237E; margin-bottom:6px; }
 #lsub   { color:#90A4AE; font-size:.9rem; font-weight:800; margin-bottom:24px; }
@@ -117,6 +118,19 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 #soloBtn { background:linear-gradient(135deg,#E65100,#FF8F00); color:white; border:none; padding:10px 28px; border-radius:50px; font-family:'Fredoka One',cursive; font-size:.95rem; cursor:pointer; box-shadow:0 4px 14px rgba(230,81,0,.4); transition:transform .2s; margin-top:10px; }
 #soloBtn:hover { transform:translateY(-2px); }
 #btn-group { display:flex; flex-direction:column; align-items:center; gap:0; }
+.qr-side { width:min(26vw,320px); min-width:220px; display:none; flex-direction:column; align-items:center; gap:10px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); border-radius:26px; padding:16px 16px 18px; box-shadow:0 14px 40px rgba(0,0,0,.28); }
+.qr-side.red-side { order:-1; }
+.qr-side.blue-side { order:1; }
+.qr-side-title { font-family:'Fredoka One',cursive; font-size:clamp(1rem,1.8vw,1.35rem); color:white; text-align:center; }
+.qr-side-sub { font-size:.82rem; font-weight:900; color:rgba(255,255,255,.72); text-align:center; }
+.qr-side img { width:100%; max-width:280px; aspect-ratio:1/1; object-fit:contain; border-radius:20px; background:white; box-shadow:0 8px 22px rgba(0,0,0,.22); }
+.qr-side-hint { font-size:.75rem; font-weight:900; color:rgba(255,255,255,.82); text-align:center; }
+@media (min-width: 1100px) {
+  .qr-side { display:flex; }
+}
+@media (max-width: 1099px) {
+  #lobby-wrap { gap:0; }
+}
 
 .cfp { position:fixed; top:-20px; border-radius:2px; animation:cf 2.5s ease-in forwards; pointer-events:none; z-index:300; }
 @keyframes cf { 0%{transform:translateY(0) rotate(0);opacity:1;} 100%{transform:translateY(110vh) rotate(720deg);opacity:0;} }
@@ -1842,18 +1856,34 @@ function toggleMusic() {
 
 <!-- LOBBY -->
 <div id="lobby">
-  <div id="lcard">
-    <span id="lemoji">🎮</span>
-    <div id="ltitle">🦜 El Tesoro Matemático</div>
-    <div id="lsub" style="font-size:.85rem;color:#607D8B;margin-bottom:6px;">Los jugadores entran por <b>/blue</b> o <b>/red</b> y se reparten automáticamente</div>
-    <div id="lstatus" style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px;margin:0 auto 0;">
-      <div class="lteam blue" id="lstat-blue" style="padding:10px 14px;line-height:1.9;text-align:left;border-radius:12px;">🔵 Azul: esperando</div>
-      <div class="lteam red"  id="lstat-red"  style="padding:10px 14px;line-height:1.9;text-align:left;border-radius:12px;">🔴 Rojo: esperando</div>
+  <div id="lobby-wrap">
+    <aside class="qr-side red-side" aria-label="QR equipo rojo">
+      <div class="qr-side-title">🔴 Equipo rojo</div>
+      <div class="qr-side-sub">Escanea este QR para entrar rápido</div>
+      <img src="JUGADOR ROJO.png" alt="QR de acceso del equipo rojo">
+      <div class="qr-side-hint">Queda a la izquierda para aprovechar ese espacio</div>
+    </aside>
+
+    <div id="lcard">
+      <span id="lemoji">🎮</span>
+      <div id="ltitle">🦜 El Tesoro Matemático</div>
+      <div id="lsub" style="font-size:.85rem;color:#607D8B;margin-bottom:6px;">Los jugadores entran por <b>/blue</b> o <b>/red</b> y se reparten automáticamente</div>
+      <div id="lstatus" style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px;margin:0 auto 0;">
+        <div class="lteam blue" id="lstat-blue" style="padding:10px 14px;line-height:1.9;text-align:left;border-radius:12px;">🔵 Azul: esperando</div>
+        <div class="lteam red"  id="lstat-red"  style="padding:10px 14px;line-height:1.9;text-align:left;border-radius:12px;">🔴 Rojo: esperando</div>
+      </div>
+      <div id="btn-group">
+        <button id="startBtn" onclick="startGame()" disabled>▶ Iniciar con ambos equipos</button>
+        <button id="soloBtn" onclick="startSolo()">🖥️ Jugar Solo (sin jugadores)</button>
+      </div>
     </div>
-    <div id="btn-group">
-      <button id="startBtn" onclick="startGame()" disabled>▶ Iniciar con ambos equipos</button>
-      <button id="soloBtn" onclick="startSolo()">🖥️ Jugar Solo (sin jugadores)</button>
-    </div>
+
+    <aside class="qr-side blue-side" aria-label="QR equipo azul">
+      <div class="qr-side-title">🔵 Equipo azul</div>
+      <div class="qr-side-sub">Escanea este QR para entrar rápido</div>
+      <img src="JUGADOR AZUL.png" alt="QR de acceso del equipo azul">
+      <div class="qr-side-hint">Queda a la derecha para aprovechar ese espacio</div>
+    </aside>
   </div>
 </div>
 
