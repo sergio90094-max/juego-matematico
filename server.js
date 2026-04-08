@@ -7,7 +7,6 @@
 const http    = require('http');
 const fs      = require('fs');
 const path    = require('path');
-const { WebSocketServer } = require('ws');
 
 const PORT = process.env.PORT || 3000;
 
@@ -608,11 +607,165 @@ const httpServer = http.createServer((req, res) => {
 });
 
 /* ══════════════════════════════════════
-   WEBSOCKET SERVER
+/* ══════════════════════════════════════
+   WEBSOCKET NATIVO — sin dependencias
+   Implementación RFC 6455
 ══════════════════════════════════════ */
-const wss = new WebSocketServer({ server: httpServer });
 
-wss.on('connection', (ws) => {
+const crypto = require('crypto');
+
+function wsHandshake(req, socket) {
+  const key = req.headers['sec-websocket-key'];
+  const accept = crypto
+    .createHash('sha1')
+    .update(key + '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')
+    .digest('base64');
+  socket.write(
+    'HTTP/1.1 101 Switching Protocols\r\n' +
+    'Upgrade: websocket\r\n' +
+    'Connection: Upgrade\r\n' +
+    `Sec-WebSocket-Accept: ${accept}\r\n` +
+    '\r\n'
+  );
+}
+
+function wsDecode(buf) {
+  if (buf.length < 2) return null;
+  const fin    = (buf[0] & 0x80) !== 0;
+  const opcode = buf[0] & 0x0f;
+  const masked = (buf[1] & 0x80) !== 0;
+  let   plen   = buf[1] & 0x7f;
+  let   offset = 2;
+
+  if (plen === 126) { plen = buf.readUInt16BE(2); offset = 4; }
+  else if (plen === 127) { plen = Number(buf.readBigUInt64BE(2)); offset = 10; }
+
+  if (buf.length < offset + (masked ? 4 : 0) + plen) return null; // need more data
+
+  let payload;
+  if (masked) {
+    const mask = buf.slice(offset, offset + 4);
+    offset += 4;
+    payload = Buffer.alloc(plen);
+    for (let i = 0; i < plen; i++) payload[i] = buf[offset + i] ^ mask[i % 4];
+  } else {
+    payload = buf.slice(offset, offset + plen);
+  }
+
+  return { opcode, payload, total: offset + plen };
+}
+
+function wsEncode(data) {
+  const payload = Buffer.from(data, 'utf8');
+  const plen    = payload.length;
+  let   header;
+  if (plen < 126) {
+    header = Buffer.alloc(2);
+    header[0] = 0x81; // FIN + opcode text
+    header[1] = plen;
+  } else if (plen < 65536) {
+    header = Buffer.alloc(4);
+    header[0] = 0x81;
+    header[1] = 126;
+    header.writeUInt16BE(plen, 2);
+  } else {
+    header = Buffer.alloc(10);
+    header[0] = 0x81;
+    header[1] = 127;
+    header.writeBigUInt64BE(BigInt(plen), 2);
+  }
+  return Buffer.concat([header, payload]);
+}
+
+// Crear objeto tipo ws compatible con el código del juego
+function makeWsClient(socket) {
+  let buf = Buffer.alloc(0);
+  const listeners = {};
+
+  const ws = {
+    readyState: 1, // OPEN
+    send(data) {
+      if (ws.readyState !== 1) return;
+      try { socket.write(wsEncode(data)); } catch(e) {}
+    },
+    on(event, cb) {
+      listeners[event] = listeners[event] || [];
+      listeners[event].push(cb);
+      return ws;
+    },
+    _emit(event, ...args) {
+      (listeners[event] || []).forEach(cb => cb(...args));
+    }
+  };
+
+  socket.on('data', (chunk) => {
+    buf = Buffer.concat([buf, chunk]);
+    while (buf.length >= 2) {
+      const opcode = buf[0] & 0x0f;
+
+      // Close frame
+      if (opcode === 0x8) {
+        ws.readyState = 3;
+        try { socket.end(); } catch(e) {}
+        ws._emit('close');
+        return;
+      }
+
+      // Ping frame → send pong
+      if (opcode === 0x9) {
+        const pong = Buffer.alloc(2);
+        pong[0] = 0x8a; pong[1] = 0x00;
+        try { socket.write(pong); } catch(e) {}
+        buf = buf.slice(2);
+        continue;
+      }
+
+      const frame = wsDecode(buf);
+      if (!frame) break; // need more data
+
+      buf = buf.slice(frame.total);
+
+      if (frame.opcode === 0x1 || frame.opcode === 0x2) {
+        ws._emit('message', frame.payload);
+      }
+    }
+  });
+
+  socket.on('close', () => {
+    if (ws.readyState !== 3) {
+      ws.readyState = 3;
+      ws._emit('close');
+    }
+  });
+
+  socket.on('error', () => {
+    ws.readyState = 3;
+    ws._emit('close');
+  });
+
+  return ws;
+}
+
+// Upgrade handler — reemplaza WebSocketServer
+httpServer.on('upgrade', (req, socket, head) => {
+  if (req.headers['upgrade'] !== 'websocket') {
+    socket.destroy();
+    return;
+  }
+  try {
+    wsHandshake(req, socket);
+  } catch(e) {
+    socket.destroy();
+    return;
+  }
+  const ws = makeWsClient(socket);
+  onWsConnection(ws);
+});
+
+/* ══════════════════════════════════════
+   LÓGICA DE CONEXIÓN (antes wss.on('connection'))
+══════════════════════════════════════ */
+function onWsConnection(ws) {
   clients.set(ws, { type: null });
 
   ws.on('message', (raw) => {
@@ -622,13 +775,11 @@ wss.on('connection', (ws) => {
 
     switch (msg.type) {
 
-      case 'ping': return; // heartbeat — no hacer nada
+      case 'ping': return;
 
       case 'register': {
-        // Si role es 'player', asignar equipo aleatoriamente
         let assignedRole = msg.role;
         if (msg.role === 'player') {
-          // Balancear equipos: asignar al equipo con menos jugadores
           const blueCount = teamPlayers.blue.size;
           const redCount  = teamPlayers.red.size;
           if (blueCount <= redCount) assignedRole = 'blue';
@@ -649,9 +800,7 @@ wss.on('connection', (ws) => {
             sendState(ws);
           }
         } else {
-          // Registrar jugador en su equipo
           teamPlayers[assignedRole].set(playerId, { id: playerId, name: playerName, ws });
-          // Decirle al jugador qué equipo le tocó y su id
           sendTo(ws, { type: 'assigned', team: assignedRole, name: playerName, id: playerId });
           if (!gameStarted) {
             sendTo(ws, { type: 'waiting' });
@@ -668,17 +817,9 @@ wss.on('connection', (ws) => {
         break;
       }
 
-      case 'input':
-        handleInput(msg.team, msg.digit);
-        break;
-
-      case 'delete':
-        handleDelete(msg.team);
-        break;
-
-      case 'submit':
-        handleSubmit(msg.team);
-        break;
+      case 'input':   handleInput(msg.team, msg.digit); break;
+      case 'delete':  handleDelete(msg.team); break;
+      case 'submit':  handleSubmit(msg.team); break;
 
       case 'restart':
         clearInterval(timerInterval);
@@ -689,8 +830,6 @@ wss.on('connection', (ws) => {
         teamPlayers.red.clear();
         broadcastAll({ type: 'waiting' });
         break;
-
-      case 'ping': break; // heartbeat
 
       case 'pause':
         gamePaused = !gamePaused;
@@ -715,23 +854,16 @@ wss.on('connection', (ws) => {
     const info = clients.get(ws);
     if (info) {
       console.log(`[-] Desconectado: ${info.type} (${info.name || ''})`);
-      // Solo notificar si era un jugador real (no la pantalla)
       if (info.type === 'blue' || info.type === 'red') {
         teamPlayers[info.type].delete(info.id);
         broadcastAll({ type: 'playerLeft', role: info.type, name: info.name, id: info.id });
         broadcastTeamUpdate();
       }
-      // Si el profesor (pantalla) se desconecta, esperar 8s antes de reiniciar
-      // por si es un blip de red o recarga de página
       if (info.type === 'screen') {
-        // Pausar el timer durante el grace period sin alterar el estado
-        const savedTimer = timerInterval;
         clearInterval(timerInterval);
         timerInterval = null;
-        const disconnectTime = Date.now();
         console.log('[*] Profesor desconectado — esperando reconexión (8s)...');
         setTimeout(() => {
-          // Si ya hay un screen nuevo conectado, no hacer nada
           let screenBack = false;
           for (const [, c] of clients) {
             if (c.type === 'screen') { screenBack = true; break; }
@@ -749,7 +881,6 @@ wss.on('connection', (ws) => {
       }
     }
     clients.delete(ws);
-    // Si no quedan clientes, reiniciar estado
     if (clients.size === 0) {
       clearInterval(timerInterval);
       G = freshState();
@@ -758,7 +889,7 @@ wss.on('connection', (ws) => {
       console.log('[*] Todos desconectados — juego reiniciado');
     }
   });
-});
+}
 
 /* ── Arrancar ── */
 httpServer.listen(PORT, '0.0.0.0', () => {
@@ -766,16 +897,13 @@ httpServer.listen(PORT, '0.0.0.0', () => {
   console.log('╔══════════════════════════════════════╗');
   console.log('║   TUG OF WAR — Servidor Online       ║');
   console.log('╠══════════════════════════════════════╣');
-
-  // Mostrar IPs disponibles
   const { networkInterfaces } = require('os');
   const nets = networkInterfaces();
   for (const name of Object.keys(nets)) {
     for (const net of nets[name]) {
       if (net.family === 'IPv4' && !net.internal) {
-        console.log(`║  📺 Pantalla : http://${net.address}:${PORT}         `);
-        console.log(`║  📱 Equipo 1 : http://${net.address}:${PORT}/blue    `);
-        console.log(`║  📱 Equipo 2 : http://${net.address}:${PORT}/red     `);
+        console.log(`║  📺 Pantalla : http://${net.address}:${PORT}`);
+        console.log(`║  📱 Jugadores: http://${net.address}:${PORT}/blue`);
         console.log('╚══════════════════════════════════════╝');
       }
     }
@@ -783,8 +911,5 @@ httpServer.listen(PORT, '0.0.0.0', () => {
   console.log('');
 });
 
-// El juego espera a que alguien presione Iniciar
-
-// ── Evitar que errores no capturados tiren el servidor ──
 process.on('uncaughtException',  err => console.error('[uncaughtException]', err.message));
 process.on('unhandledRejection', err => console.error('[unhandledRejection]', err));
