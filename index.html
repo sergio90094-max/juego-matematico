@@ -108,8 +108,8 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 #lemoji { font-size:3rem; display:block; margin-bottom:8px; }
 #ltitle { font-family:'Fredoka One',cursive; font-size:2rem; color:#1A237E; margin-bottom:6px; }
 #lsub   { color:#90A4AE; font-size:.9rem; font-weight:800; margin-bottom:24px; }
-#lstatus { display:flex; gap:14px; justify-content:center; margin-bottom:22px; }
-.lteam { background:#F5F5F5; border-radius:10px; padding:8px 16px; font-family:'Fredoka One',cursive; font-size:1rem; }
+#lstatus { display:flex; flex-direction:column; gap:10px; justify-content:center; margin-bottom:22px; }
+.lteam { background:#F5F5F5; border-radius:12px; padding:10px 14px; font-family:'Fredoka One',cursive; font-size:1rem; line-height:1.9; }
 .lteam.blue { color:#1565C0; } .lteam.red { color:#C62828; }
 #startBtn { background:linear-gradient(135deg,#2E7D32,#43A047); color:white; border:none; padding:13px 36px; border-radius:50px; font-family:'Fredoka One',cursive; font-size:1.15rem; cursor:pointer; box-shadow:0 5px 18px rgba(46,125,50,.4); transition:transform .2s; }
 #startBtn:hover { transform:translateY(-2px); }
@@ -450,23 +450,26 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
    WEBSOCKET — conectar al servidor
 ══════════════════════════════════════ */
 const TS = 28;
-let ws;
-let bluePlayers = [];
-let redPlayers = [];
-let G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'', bluePlayers:[], redPlayers:[] };
+let ws, G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'' };
+
 
   // ── LOBBY ──
+  let blueReady = false, redReady = false;
+  let teamData = { blue: [], red: [] };
 
   function updateLobby() {
-    const blueCount = bluePlayers.length;
-    const redCount = redPlayers.length;
-    document.getElementById('lstat-blue').textContent = `🔵 Azul: ${blueCount} jugador${blueCount===1?'':'es'}`;
-    document.getElementById('lstat-red').textContent  = `🔴 Rojo: ${redCount} jugador${redCount===1?'':'es'}`;
-    const cb = document.getElementById('conn-b');
-    const cr = document.getElementById('conn-r');
-    if (cb) { cb.textContent = blueCount ? `✅ ${blueCount} conectado${blueCount===1?'':'s'}` : '📱 Sin conectar'; cb.className = 'conn-badge ' + (blueCount ? 'online' : 'offline'); }
-    if (cr) { cr.textContent = redCount ? `✅ ${redCount} conectado${redCount===1?'':'s'}` : '📱 Sin conectar'; cr.className = 'conn-badge ' + (redCount ? 'online' : 'offline'); }
-    document.getElementById('startBtn').disabled = !(blueCount > 0 && redCount > 0);
+    const b = teamData.blue, r = teamData.red;
+    blueReady = b.length > 0;
+    redReady  = r.length > 0;
+
+    const fmtPlayers = (players, color) => {
+      if (!players.length) return `<span style="opacity:.6">esperando...</span>`;
+      return players.map(p => `<span style="background:${color};color:white;border-radius:50px;padding:2px 10px;font-size:.78rem;display:inline-block;margin:2px;">🏴‍☠️ ${p.name}</span>`).join('');
+    };
+
+    document.getElementById('lstat-blue').innerHTML = `🔵 Azul (${b.length}): ` + fmtPlayers(b, '#1565C0');
+    document.getElementById('lstat-red').innerHTML  = `🔴 Rojo (${r.length}): ` + fmtPlayers(r, '#C62828');
+    document.getElementById('startBtn').disabled = !(blueReady && redReady);
   }
 
   let selectedDiff = 'easy';
@@ -572,9 +575,6 @@ function handleMsg(msg) {
 
     case 'state':
       G = { ...G, ...msg };
-      bluePlayers = msg.bluePlayers || [];
-      redPlayers = msg.redPlayers || [];
-      updateLobby();
       document.getElementById('qt').textContent = msg.qtext;
       document.getElementById('rn').textContent = msg.rnd;
       document.getElementById('sb').textContent = msg.sb;
@@ -686,10 +686,21 @@ function handleMsg(msg) {
 
 
 
-    case 'playersUpdate': {
-      bluePlayers = msg.blue || [];
-      redPlayers = msg.red || [];
+    case 'teamUpdate': {
+      teamData = { blue: msg.blue || [], red: msg.red || [] };
       updateLobby();
+      break;
+    }
+
+    case 'playerJoined': {
+      // teamUpdate will refresh the list; just flash a notification
+      const connEl = document.getElementById(msg.role==='blue'?'conn-b':'conn-r');
+      if(connEl){ connEl.textContent=`✅ ${msg.name||'Jugador'} conectado`; connEl.className='conn-badge online'; }
+      break;
+    }
+    case 'playerLeft': {
+      const connEl2 = document.getElementById(msg.role==='blue'?'conn-b':'conn-r');
+      if(connEl2){ connEl2.textContent=`📱 ${msg.name||'Jugador'} salió`; connEl2.className='conn-badge offline'; }
       break;
     }
 
@@ -707,6 +718,8 @@ function handleMsg(msg) {
 
     case 'waiting':
       document.getElementById('lobby').classList.remove('hidden');
+      teamData = { blue: [], red: [] };
+      blueReady = false; redReady = false;
       updateLobby();
       break;
 
@@ -1203,39 +1216,11 @@ function drawShip(x, y, color, accent, dir, bob) {
 
   // ── PIRATES ON DECK ──
   const sc2 = Math.min(W/900, H/350) * 0.9;
-  const players = dir > 0 ? bluePlayers : redPlayers;
-  const renderPlayers = players.length ? players : [{ name:'' }];
-  const count = renderPlayers.length;
-  const span = Math.min(0.72, 0.18 + count * 0.11);
-  renderPlayers.forEach((player, i) => {
-    const t = count === 1 ? 0.5 : i / (count - 1);
-    const pxNorm = dir > 0 ? (-span / 2 + t * span) : (span / 2 - t * span);
-    const bob = Math.sin(AF * 0.05 + i * 0.9) * 2.5;
-    const px = SW * pxNorm;
-    figure(px, -SH*0.18 + bob, dir,
-      i % 2 === 0 ? color : accent,
+  const ppos = dir>0 ? [-0.3,-0.05,0.22] : [0.3,0.05,-0.22];
+  ppos.forEach((px,i)=>{
+    figure(SW*px, -SH*0.18, dir,
+      i===0 ? color : (i===1 ? accent : color),
       color, '#111', AF+i*25, sc2);
-    if (player.name) {
-      cx.save();
-      cx.font = `900 ${Math.max(12, Math.min(18, W*0.016))}px Nunito`;
-      cx.textAlign = 'center';
-      cx.textBaseline = 'middle';
-      const labelY = -SH*0.18 - 128*sc2 + bob;
-      const textW = cx.measureText(player.name).width;
-      const padX = 8, padY = 5;
-      const boxW = textW + padX*2;
-      const boxH = Math.max(22, W*0.026);
-      cx.beginPath();
-      cx.roundRect(px - boxW/2, labelY - boxH/2, boxW, boxH, 10);
-      cx.fillStyle = 'rgba(255,255,255,0.92)';
-      cx.fill();
-      cx.strokeStyle = dir > 0 ? '#1565C0' : '#C62828';
-      cx.lineWidth = 2;
-      cx.stroke();
-      cx.fillStyle = '#102027';
-      cx.fillText(player.name, px, labelY + 1);
-      cx.restore();
-    }
   });
 
   cx.restore();
@@ -1765,10 +1750,10 @@ function toggleMusic() {
   <div id="lcard">
     <span id="lemoji">🎮</span>
     <div id="ltitle">🦜 El Tesoro Matemático</div>
-    <div id="lsub">Esperando jugadores...</div>
-    <div id="lstatus">
-      <div class="lteam blue" id="lstat-blue">🔵 Azul: esperando</div>
-      <div class="lteam red"  id="lstat-red">🔴 Rojo: esperando</div>
+    <div id="lsub" style="font-size:.85rem;color:#607D8B;margin-bottom:6px;">Los jugadores entran por <b>/blue</b> o <b>/red</b> y se reparten automáticamente</div>
+    <div id="lstatus" style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px;margin:0 auto 0;">
+      <div class="lteam blue" id="lstat-blue" style="padding:10px 14px;line-height:1.9;text-align:left;border-radius:12px;">🔵 Azul: esperando</div>
+      <div class="lteam red"  id="lstat-red"  style="padding:10px 14px;line-height:1.9;text-align:left;border-radius:12px;">🔴 Rojo: esperando</div>
     </div>
     <div id="btn-group">
       <button id="startBtn" onclick="startGame()" disabled>▶ Iniciar con ambos equipos</button>

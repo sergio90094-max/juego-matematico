@@ -3,517 +3,531 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Equipo 2 — Matemáticas 4° y 5°</title>
+<title>Juego de Matemáticas — Unirse</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@700;800;900&display=swap');
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
 :root {
-  --blue:#C62828; --bluel:#E53935; --blued:#B71C1C;
-  --bg:#FFEBEE; --card:#fff; --border:#FFCDD2;
+  --team:#1565C0; --teaml:#1E88E5; --teamd:#0D47A1;
+  --bg:#E3F2FD; --card:#fff; --border:#BBDEFB;
+}
+body.red-theme {
+  --team:#C62828; --teaml:#E53935; --teamd:#B71C1C;
+  --bg:#FFEBEE; --border:#FFCDD2;
 }
 
-/* ── LAYOUT PRINCIPAL: todo en 100dvh sin scroll ── */
 html, body {
-  width: 100%; height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
-  background: var(--bg);
-  font-family: 'Nunito', sans-serif;
-  user-select: none;
-  display: flex;
-  flex-direction: column;
+  width:100%; height:100dvh; max-height:100dvh;
+  overflow:hidden; background:var(--bg);
+  font-family:'Nunito',sans-serif; user-select:none;
+  display:flex; flex-direction:column;
+  transition:background .4s;
 }
 
-/* HEADER — compacto */
+/* ══ NAME SCREEN ══ */
+#name-screen {
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  flex:1; gap:14px; padding:28px 24px;
+  background:linear-gradient(135deg,#1565C0 0%,#0D47A1 100%);
+}
+.ns-pirate { font-size:5rem; animation:float 2.5s ease-in-out infinite; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+.ns-title {
+  font-family:'Fredoka One',cursive; font-size:2rem;
+  color:white; text-align:center;
+  text-shadow:0 2px 8px rgba(0,0,0,.3);
+}
+.ns-sub { font-size:.9rem; color:rgba(255,255,255,.8); font-weight:800; text-align:center; }
+#name-input {
+  width:100%; max-width:300px;
+  padding:14px 18px; border-radius:16px;
+  border:3px solid rgba(255,255,255,.4);
+  background:rgba(255,255,255,.15); color:white;
+  font-family:'Fredoka One',cursive; font-size:1.5rem;
+  text-align:center; outline:none;
+  transition:border .2s,background .2s;
+}
+#name-input::placeholder { color:rgba(255,255,255,.45); }
+#name-input:focus { border-color:white; background:rgba(255,255,255,.25); }
+#join-btn {
+  width:100%; max-width:300px; padding:16px;
+  border-radius:16px; border:none;
+  background:white; color:#1565C0;
+  font-family:'Fredoka One',cursive; font-size:1.4rem;
+  cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,.2);
+  transition:transform .1s,box-shadow .1s;
+  -webkit-tap-highlight-color:transparent;
+}
+#join-btn:active { transform:scale(.95); box-shadow:0 2px 8px rgba(0,0,0,.2); }
+
+/* ══ GAME SCREEN ══ */
+#game-screen { display:none; flex-direction:column; flex:1; }
+
 #header {
-  background: var(--blue);
-  padding: 8px 12px 6px;
-  text-align: center;
-  flex-shrink: 0;
+  background:var(--team); padding:5px 10px 4px;
+  flex-shrink:0; display:flex; align-items:center; gap:8px;
 }
-#header h1 {
-  font-family: 'Fredoka One', cursive;
-  font-size: 1.2rem;
-  color: white;
+#avatar-wrap {
+  display:flex; flex-direction:column; align-items:center;
+  flex-shrink:0; min-width:56px;
 }
-#conn-status {
-  font-size: .65rem;
-  font-weight: 900;
-  color: rgba(255,255,255,.7);
-  margin-top: 1px;
+#pirate-emoji { font-size:2rem; line-height:1; }
+#player-name-tag {
+  font-family:'Fredoka One',cursive; font-size:.65rem;
+  color:white; background:var(--teamd);
+  padding:1px 8px; border-radius:50px; margin-top:2px;
+  max-width:70px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  box-shadow:0 2px 4px rgba(0,0,0,.2);
 }
-#conn-status.ok { color: #A5D6A7; }
+#header-center { flex:1; text-align:center; }
+#header h1 { font-family:'Fredoka One',cursive; font-size:1.05rem; color:white; }
+#conn-status { font-size:.58rem; font-weight:900; color:rgba(255,255,255,.65); }
+#conn-status.ok { color:#A5D6A7; }
 
-/* SCORE BAR — compacto */
 #score-bar {
-  display: flex;
-  justify-content: center;
-  gap: 12px;
-  padding: 5px 12px 0;
-  flex-shrink: 0;
+  display:flex; justify-content:center; gap:10px;
+  padding:4px 12px 0; flex-shrink:0;
 }
 .sc-chip {
-  font-family: 'Fredoka One', cursive;
-  font-size: .8rem;
-  padding: 3px 12px;
-  border-radius: 50px;
-  color: white;
+  font-family:'Fredoka One',cursive; font-size:.75rem;
+  padding:2px 10px; border-radius:50px; color:white;
 }
-.sc-chip.b { background: var(--blue); }
-.sc-chip.r { background: #C62828; }
+.sc-chip.b { background:#1565C0; }
+.sc-chip.r { background:#C62828; }
 
-/* QUESTION BOX — compacto */
+/* Team players chips */
+#team-list {
+  display:flex; flex-wrap:wrap; gap:3px;
+  padding:3px 10px; justify-content:center;
+  flex-shrink:0; min-height:20px;
+}
+.tp-chip {
+  font-size:.58rem; font-weight:900;
+  background:rgba(0,0,0,.06); border-radius:50px;
+  padding:1px 7px; color:var(--teamd);
+  border:1.5px solid var(--border);
+}
+.tp-chip.me { background:var(--team); color:white; border-color:var(--team); }
+
 #qbox {
-  background: var(--card);
-  margin: 5px 10px 0;
-  border-radius: 12px;
-  padding: 6px 12px;
-  text-align: center;
-  border: 2px solid var(--border);
-  box-shadow: 0 2px 8px rgba(198,40,40,.1);
-  flex-shrink: 0;
+  background:var(--card); margin:4px 10px 0;
+  border-radius:12px; padding:5px 12px;
+  text-align:center; border:2px solid var(--border);
+  box-shadow:0 2px 8px rgba(0,0,0,.08); flex-shrink:0;
 }
 #qlabel {
-  font-size: .55rem;
-  font-weight: 900;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: #90A4AE;
-  margin-bottom: 1px;
+  font-size:.48rem; font-weight:900; letter-spacing:2px;
+  text-transform:uppercase; color:#90A4AE; margin-bottom:1px;
 }
 #qtext {
-  font-family: 'Fredoka One', cursive;
-  font-size: clamp(1.6rem, 7vw, 2.2rem);
-  color: var(--blued);
-  line-height: 1.1;
-  transition: opacity .18s, transform .18s;
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(1.4rem,6vw,1.9rem);
+  color:var(--teamd); line-height:1.1;
+  transition:opacity .18s,transform .18s;
 }
 #qtext.fade { opacity:0; transform:scale(.92); }
 
-/* TIMER — compacto */
-#tbar-wrap {
-  margin: 5px 10px 0;
-  height: 6px;
-  background: #ddd;
-  border-radius: 99px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-#tbar {
-  height: 100%; width: 100%;
-  background: linear-gradient(90deg, #4CAF50, #F9A825, #F44336);
-  border-radius: 99px;
-  transition: width 1s linear;
-}
-#timer-num {
-  text-align: center;
-  font-family: 'Fredoka One', cursive;
-  font-size: .95rem;
-  color: #2E7D32;
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-#timer-num.ok     { color: #F9A825; }
-#timer-num.urgent { color: #E53935; animation: tpulse .5s infinite alternate; }
-@keyframes tpulse { to { transform: scale(1.1); } }
+#tbar-wrap { margin:4px 10px 0; height:6px; background:#ddd; border-radius:99px; overflow:hidden; flex-shrink:0; }
+#tbar { height:100%; width:100%; background:linear-gradient(90deg,#4CAF50,#F9A825,#F44336); border-radius:99px; transition:width 1s linear; }
+#timer-num { text-align:center; font-family:'Fredoka One',cursive; font-size:.88rem; color:#2E7D32; margin-top:2px; flex-shrink:0; }
+#timer-num.ok { color:#F9A825; }
+#timer-num.urgent { color:#E53935; animation:tpulse .5s infinite alternate; }
+@keyframes tpulse { to { transform:scale(1.1); } }
 
-/* ANSWER DISPLAY — compacto */
 #ans-box {
-  margin: 5px 10px 0;
-  background: var(--card);
-  border: 2.5px solid var(--bluel);
-  border-radius: 12px;
-  text-align: center;
-  padding: 5px 10px;
-  flex-shrink: 0;
+  margin:4px 10px 0; background:var(--card);
+  border:2.5px solid var(--teaml); border-radius:12px;
+  text-align:center; padding:4px 10px; flex-shrink:0;
 }
 #ans-val {
-  font-family: 'Fredoka One', cursive;
-  font-size: clamp(1.6rem, 7vw, 2.2rem);
-  color: var(--blue);
-  letter-spacing: 4px;
-  line-height: 1.2;
+  font-family:'Fredoka One',cursive;
+  font-size:clamp(1.4rem,6vw,1.9rem);
+  color:var(--team); letter-spacing:4px; line-height:1.2;
 }
 
-/* FEEDBACK — compacto */
-#fb {
-  text-align: center;
-  font-weight: 900;
-  font-size: .8rem;
-  height: 1.3em;
-  padding: 1px 0;
-  color: #2E7D32;
-  flex-shrink: 0;
-}
-#fb.w { color: #E53935; }
+#fb { text-align:center; font-weight:900; font-size:.78rem; height:1.3em; padding:1px 0; color:#2E7D32; flex-shrink:0; }
+#fb.w { color:#E53935; }
 
-/* NUMPAD — ocupa todo el espacio restante */
 #numpad {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 6px;
-  padding: 4px 10px 8px;
-  min-height: 0;
+  flex:1; display:grid; grid-template-columns:1fr 1fr 1fr;
+  gap:5px; padding:3px 10px 8px; min-height:0;
 }
 .nb {
-  border: 2px solid var(--border);
-  border-radius: 12px;
-  background: var(--card);
-  font-family: 'Fredoka One', cursive;
-  font-size: clamp(1.3rem, 5vw, 1.8rem);
-  color: var(--blued);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 6px rgba(198,40,40,.1);
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-  transition: transform .08s, background .1s;
-  min-height: 0;
-  /* SIN aspect-ratio: 1 para que se adapte al espacio disponible */
+  border:2px solid var(--border); border-radius:12px;
+  background:var(--card); font-family:'Fredoka One',cursive;
+  font-size:clamp(1.1rem,4.5vw,1.6rem); color:var(--teamd);
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 2px 6px rgba(0,0,0,.07);
+  -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  transition:transform .08s,background .1s; min-height:0;
 }
-.nb:active { transform: scale(.85); background: var(--bluel); color: white; }
-.nb.zero { grid-column: span 2; }
-.nb.del  { background: #FFEBEE; border-color: #FFCDD2; color: #C62828; }
+.nb:active { transform:scale(.85); background:var(--teaml); color:white; }
+.nb.zero { grid-column:span 2; }
+.nb.del  { background:#FFEBEE; border-color:#FFCDD2; color:#C62828; }
 .nb.ok   {
-  grid-column: span 3;
-  background: var(--blue);
-  color: white;
-  border: none;
-  font-size: clamp(1rem, 4vw, 1.4rem);
-  box-shadow: 0 4px 14px rgba(198,40,40,.35);
+  grid-column:span 3; background:var(--team);
+  color:white; border:none;
+  font-size:clamp(.9rem,3.5vw,1.2rem);
+  box-shadow:0 4px 14px rgba(0,0,0,.2);
 }
-.nb.ok:active { transform: scale(.96); background: var(--blued); }
+.nb.ok:active { transform:scale(.96); background:var(--teamd); }
 
-/* Overlay fin de juego */
+/* Overlays */
 #over-overlay {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(13,71,161,.88);
-  backdrop-filter: blur(6px);
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-  text-align: center;
-  padding: 24px;
+  display:none; position:fixed; inset:0;
+  background:rgba(13,71,161,.88); backdrop-filter:blur(6px);
+  flex-direction:column; align-items:center; justify-content:center;
+  z-index:100; text-align:center; padding:24px;
 }
-#over-overlay.show { display: flex; }
-#over-emoji { font-size: 3.5rem; margin-bottom: 8px; }
-#over-title { font-family: 'Fredoka One', cursive; font-size: 2rem; color: white; margin-bottom: 6px; }
-#over-sub   { font-size: .9rem; color: rgba(255,255,255,.75); font-weight: 800; }
+#over-overlay.show { display:flex; }
+#over-emoji { font-size:3.5rem; margin-bottom:8px; }
+#over-title { font-family:'Fredoka One',cursive; font-size:2rem; color:white; margin-bottom:6px; }
+#over-sub   { font-size:.9rem; color:rgba(255,255,255,.75); font-weight:800; }
 
-/* ── PAUSA OVERLAY ── */
 #pause-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:500; align-items:center; justify-content:center; flex-direction:column; }
 #pause-overlay.show { display:flex; }
-#pause-card { background:white; border-radius:20px; padding:30px 44px; text-align:center; }
+#pause-card { background:white; border-radius:20px; padding:28px 40px; text-align:center; }
 #pause-emoji { font-size:3rem; }
-#pause-title { font-family:'Fredoka One',cursive; font-size:2rem; color:#1A237E; margin-top:6px; }
-#pause-sub { color:#90A4AE; font-weight:800; font-size:.9rem; margin-top:4px; }
+#pause-title { font-family:'Fredoka One',cursive; font-size:1.8rem; color:#1A237E; margin-top:6px; }
+#pause-sub { color:#90A4AE; font-weight:800; font-size:.85rem; margin-top:4px; }
 
-#join-overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.58); z-index:700; backdrop-filter:blur(6px); }
-#join-card { background:white; width:min(92vw,420px); border-radius:24px; padding:28px 22px; text-align:center; box-shadow:0 24px 50px rgba(0,0,0,.28); }
-#join-card h2 { font-family:'Fredoka One',cursive; font-size:1.55rem; color:var(--blued); margin-bottom:6px; }
-#join-card p { color:#607D8B; font-weight:800; font-size:.92rem; margin-bottom:16px; }
-#player-name { width:100%; border:2px solid var(--border); border-radius:14px; padding:14px 16px; font-family:'Nunito',sans-serif; font-size:1rem; font-weight:900; text-align:center; outline:none; margin-bottom:12px; }
-#player-name:focus { border-color:var(--bluel); box-shadow:0 0 0 4px rgba(30,136,229,.12); }
-#join-btn { width:100%; border:none; border-radius:16px; padding:14px 18px; font-family:'Fredoka One',cursive; font-size:1.02rem; color:white; background:linear-gradient(135deg,var(--blue),var(--blued)); cursor:pointer; box-shadow:0 8px 20px rgba(0,0,0,.18); }
-#join-help { margin-top:10px; min-height:1.1em; font-size:.8rem; font-weight:900; color:#C62828; }
-#player-chip { margin-top:4px; font-size:.75rem; font-weight:900; color:rgba(255,255,255,.95); display:none; }
-
+#wait-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(21,101,192,.93); z-index:200;
+  align-items:center; justify-content:center; flex-direction:column; gap:12px;
+}
+#wait-overlay.show { display:flex; }
+#wait-overlay .w-icon { font-size:3.5rem; animation:float 2s ease-in-out infinite; }
+#wait-overlay .w-txt { font-family:'Fredoka One',cursive; font-size:1.45rem; color:white; text-align:center; }
+#wait-overlay .w-sub { color:rgba(255,255,255,.75); font-weight:800; font-size:.82rem; text-align:center; }
+#wait-team-players {
+  display:flex; flex-wrap:wrap; gap:5px; justify-content:center;
+  max-width:280px; margin-top:4px;
+}
+.w-player-chip {
+  font-size:.7rem; font-weight:900;
+  background:rgba(255,255,255,.2); border-radius:50px;
+  padding:3px 10px; color:white;
+}
+.w-player-chip.me { background:rgba(255,255,255,.5); color:#0D47A1; }
 </style>
 </head>
 <body>
 
-<div id="join-overlay">
-  <div id="join-card">
-    <h2>🔴 Equipo Rojo</h2>
-    <p>Escribe tu nombre para entrar con tu pirata.</p>
-    <input id="player-name" maxlength="18" placeholder="Tu nombre" autocomplete="nickname">
-    <button id="join-btn" type="button">Entrar al juego</button>
-    <div id="join-help"></div>
+<!-- PANTALLA DE NOMBRE -->
+<div id="name-screen">
+  <div class="ns-pirate">🏴‍☠️</div>
+  <div class="ns-title">¡Únete al Juego!</div>
+  <div class="ns-sub">Elige tu nombre de pirata 🗡️</div>
+  <input id="name-input" type="text" maxlength="16" placeholder="Tu nombre..." autocomplete="off" spellcheck="false">
+  <button id="join-btn">⚓ ¡Unirme!</button>
+</div>
+
+<!-- PANTALLA DEL JUEGO -->
+<div id="game-screen">
+  <div id="header">
+    <div id="avatar-wrap">
+      <div id="pirate-emoji">🏴‍☠️</div>
+      <div id="player-name-tag">Pirata</div>
+    </div>
+    <div id="header-center">
+      <h1 id="team-title">Equipo</h1>
+      <div id="conn-status">Conectando...</div>
+    </div>
+  </div>
+
+  <div id="score-bar">
+    <div class="sc-chip b">🔵 <span id="sb">0</span></div>
+    <div class="sc-chip r">🔴 <span id="sr">0</span></div>
+  </div>
+
+  <div id="team-list"></div>
+
+  <div id="qbox">
+    <div id="qlabel">RESUELVE</div>
+    <div id="qtext">...</div>
+  </div>
+
+  <div id="tbar-wrap"><div id="tbar"></div></div>
+  <div id="timer-num">38</div>
+
+  <div id="ans-box"><div id="ans-val">?</div></div>
+  <div id="fb"> </div>
+
+  <div id="numpad">
+    <button class="nb" data-np="1">1</button>
+    <button class="nb" data-np="2">2</button>
+    <button class="nb" data-np="3">3</button>
+    <button class="nb" data-np="4">4</button>
+    <button class="nb" data-np="5">5</button>
+    <button class="nb" data-np="6">6</button>
+    <button class="nb" data-np="7">7</button>
+    <button class="nb" data-np="8">8</button>
+    <button class="nb" data-np="9">9</button>
+    <button class="nb zero" data-np="0">0</button>
+    <button class="nb del"  data-del="1">⌫</button>
+    <button class="nb ok"   data-sub="1">✓ OK</button>
+  </div>
+
+  <!-- Overlays -->
+  <div id="wait-overlay">
+    <div class="w-icon">⏳</div>
+    <div class="w-txt" id="wait-title">Esperando al<br>profesor...</div>
+    <div class="w-sub" id="wait-sub"></div>
+    <div id="wait-team-players"></div>
+  </div>
+
+  <div id="over-overlay">
+    <div id="over-emoji">🏁</div>
+    <div id="over-title">¡Juego terminado!</div>
+    <div id="over-sub">El profesor iniciará una nueva partida</div>
+  </div>
+
+  <div id="pause-overlay">
+    <div id="pause-card">
+      <div id="pause-emoji">⏸️</div>
+      <div id="pause-title">Juego en Pausa</div>
+      <div id="pause-sub">Esperando al profesor...</div>
+    </div>
   </div>
 </div>
 
-<div id="header">
-  <h1>🔴 Equipo 2</h1>
-  <div id="conn-status">Esperando nombre...</div>
-  <div id="player-chip"></div>
-</div>
-
-<div id="score-bar">
-  <div class="sc-chip b2">🔵 <span id="sb">0</span></div>
-  <div class="sc-chip r">🔴 <span id="sr">0</span></div>
-</div>
-
-<div id="qbox">
-  <div id="qlabel">RESUELVE</div>
-  <div id="qtext">...</div>
-</div>
-
-<div id="tbar-wrap"><div id="tbar"></div></div>
-<div id="timer-num">38</div>
-
-<div id="ans-box">
-  <div id="ans-val">?</div>
-</div>
-
-<div id="fb"> </div>
-
-<div id="numpad">
-  <button class="nb" onclick="np('1')">1</button>
-  <button class="nb" onclick="np('2')">2</button>
-  <button class="nb" onclick="np('3')">3</button>
-  <button class="nb" onclick="np('4')">4</button>
-  <button class="nb" onclick="np('5')">5</button>
-  <button class="nb" onclick="np('6')">6</button>
-  <button class="nb" onclick="np('7')">7</button>
-  <button class="nb" onclick="np('8')">8</button>
-  <button class="nb" onclick="np('9')">9</button>
-  <button class="nb zero" onclick="np('0')">0</button>
-  <button class="nb del"  onclick="del()">⌫</button>
-  <button class="nb ok"   onclick="sub()">✓ OK</button>
-</div>
-
-<div id="over-overlay">
-  <div id="over-emoji">🏁</div>
-  <div id="over-title">¡Juego terminado!</div>
-  <div id="over-sub">El profesor iniciará una nueva partida</div>
-</div>
-
 <script>
-const TEAM = 'r';
-const TS   = 38;
+let TEAM = 'b';
+let MY_NAME = '';
+let MY_ID = null;
+const TS = 38;
 let ws, buf = '';
-let playerName = '';
-const playerId = sessionStorage.getItem('tm_player_id') || ('p_' + Math.random().toString(36).slice(2));
-sessionStorage.setItem('tm_player_id', playerId);
-
-let pingIntervalR = null;
-
+let pingInterval = null;
 let suppressClickUntil = 0;
+let lastTeamData = {};
 
-function initFastPad() {
-  const buttons = document.querySelectorAll('#numpad button[onclick]');
-  buttons.forEach((btn) => {
-    const action = btn.getAttribute('onclick');
-    btn.removeAttribute('onclick');
+// ── Pantalla de nombre ──
+document.getElementById('name-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryJoin();
+});
+document.getElementById('join-btn').addEventListener('pointerdown', e => {
+  e.preventDefault(); tryJoin();
+}, { passive: false });
 
-    const run = () => {
-      if (action.startsWith("np('")) {
-        np(action.match(/np\('(.+?)'\)/)[1]);
-      } else if (action.startsWith('del(')) {
-        del();
-      } else if (action.startsWith('sub(')) {
-        sub();
-      }
-    };
-
-    btn.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      suppressClickUntil = Date.now() + 400;
-      run();
-    }, { passive: false });
-
-    btn.addEventListener('click', (e) => {
-      if (Date.now() < suppressClickUntil) {
-        e.preventDefault();
-        return;
-      }
-      run();
-    });
-  });
-}
-
-
-function setJoinHelp(msg) { document.getElementById('join-help').textContent = msg || ''; }
-function updatePlayerChip() {
-  const chip = document.getElementById('player-chip');
-  if (!playerName) { chip.style.display = 'none'; return; }
-  chip.style.display = 'block';
-  chip.textContent = '🧑‍💻 ' + playerName;
-}
 function tryJoin() {
-  const input = document.getElementById('player-name');
-  const value = input.value.replace(/\s+/g,' ').trim().slice(0,18);
-  if (!value) { setJoinHelp('Escribe tu nombre para entrar.'); input.focus(); return; }
-  playerName = value;
-  localStorage.setItem('tm_name_red', playerName);
-  document.getElementById('join-overlay').style.display = 'none';
-  updatePlayerChip();
+  const n = document.getElementById('name-input').value.trim();
+  if (!n) {
+    const inp = document.getElementById('name-input');
+    inp.style.borderColor = '#ff5252';
+    inp.focus();
+    return;
+  }
+  MY_NAME = n.slice(0, 16);
+  document.getElementById('name-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'flex';
   connectWS();
 }
-document.getElementById('join-btn').addEventListener('click', tryJoin);
-document.getElementById('player-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') tryJoin(); });
-document.addEventListener('DOMContentLoaded', () => {
-  const saved = localStorage.getItem('tm_name_red') || '';
-  const input = document.getElementById('player-name');
-  input.value = saved;
-  input.focus();
-  input.select();
-});
 
+// ── WebSocket ──
 function connectWS() {
   const host = window.location.host;
-  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-  ws = new WebSocket(protocol + host);
-
+  const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+  ws = new WebSocket(proto + host);
   ws.onopen = () => {
-    ws.send(JSON.stringify({ type:'register', role:'red', id: playerId, name: playerName }));
+    ws.send(JSON.stringify({ type:'register', role:'player', name: MY_NAME }));
     setStatus('✅ Conectado', true);
-    clearInterval(pingIntervalR);
-    pingIntervalR = setInterval(() => {
+    clearInterval(pingInterval);
+    pingInterval = setInterval(() => {
       if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type:'ping' }));
     }, 10000);
   };
-
-  ws.onmessage = (e) => {
-    try { handle(JSON.parse(e.data)); } catch(err) {}
-  };
-
-  ws.onerror = () => { ws.close(); };
-
-  ws.onclose = () => {
-    clearInterval(pingIntervalR);
+  ws.onmessage = e => { try { handle(JSON.parse(e.data)); } catch(x){} };
+  ws.onerror   = () => ws.close();
+  ws.onclose   = () => {
+    clearInterval(pingInterval);
     setStatus('🔄 Reconectando...', false);
     setTimeout(connectWS, 1500);
   };
 }
 
-// Reconectar cuando la pestaña vuelva a ser visible
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden && (!ws || ws.readyState !== 1)) connectWS();
 });
 
-function send(obj) { if(ws && ws.readyState===1) ws.send(JSON.stringify(obj)); }
+function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
 
+// ── Tema de equipo ──
+function applyTeam(team) {
+  TEAM = team === 'blue' ? 'b' : 'r';
+  const isRed = team === 'red';
+  document.body.classList.toggle('red-theme', isRed);
+  document.getElementById('team-title').textContent = isRed ? '🔴 Equipo Rojo' : '🔵 Equipo Azul';
+  document.getElementById('player-name-tag').textContent = MY_NAME;
+  // Update wait overlay bg color
+  const wo = document.getElementById('wait-overlay');
+  wo.style.background = isRed ? 'rgba(183,28,28,.93)' : 'rgba(21,101,192,.93)';
+}
+
+// ── Lista de jugadores ──
+function renderTeamList(data) {
+  lastTeamData = data;
+  const myTeamKey = TEAM === 'b' ? 'blue' : 'red';
+  const players = data[myTeamKey] || [];
+
+  // In-game chips (compact)
+  document.getElementById('team-list').innerHTML = players.map(p =>
+    `<span class="tp-chip${p.id === MY_ID ? ' me' : ''}">${p.id === MY_ID ? '⚓' : '🏴‍☠️'} ${p.name}</span>`
+  ).join('');
+
+  // Waiting overlay chips
+  document.getElementById('wait-team-players').innerHTML = players.map(p =>
+    `<span class="w-player-chip${p.id === MY_ID ? ' me' : ''}">${p.id === MY_ID ? '⚓' : '🏴‍☠️'} ${p.name}</span>`
+  ).join('');
+}
+
+// ── Mensajes ──
 function handle(msg) {
-  switch(msg.type) {
+  switch (msg.type) {
+
+    case 'assigned':
+      MY_ID = msg.id;
+      applyTeam(msg.team);
+      break;
+
+    case 'teamUpdate':
+      renderTeamList(msg);
+      break;
+
+    case 'waiting':
+      document.getElementById('wait-overlay').classList.add('show');
+      document.getElementById('wait-sub').textContent =
+        `Eres del ${TEAM === 'b' ? 'Equipo Azul 🔵' : 'Equipo Rojo 🔴'} · ${MY_NAME}`;
+      break;
+
     case 'state':
+      document.getElementById('wait-overlay').classList.remove('show');
       document.getElementById('qtext').textContent = msg.qtext;
       document.getElementById('sb').textContent = msg.sb;
       document.getElementById('sr').textContent = msg.sr;
-      buf = msg.ir || '';
+      buf = (TEAM === 'b' ? msg.ib : msg.ir) || '';
       document.getElementById('ans-val').textContent = buf || '?';
       updateTimer(msg.timer);
       break;
+
     case 'pause':
-      const po = document.getElementById('pause-overlay');
-      if (msg.paused) po.classList.add('show');
-      else po.classList.remove('show');
+      document.getElementById('pause-overlay').classList.toggle('show', msg.paused);
       break;
 
     case 'hostLeft':
+      document.getElementById('pause-emoji').textContent = '🏴‍☠️';
       document.getElementById('pause-title').textContent = 'Sesión terminada';
       document.getElementById('pause-sub').textContent = 'El profesor cerró el juego';
-      document.getElementById('pause-emoji').textContent = '🏴‍☠️';
       document.getElementById('pause-overlay').classList.add('show');
       break;
 
-    case 'timer':
-      updateTimer(msg.value);
-      break;
+    case 'timer':      updateTimer(msg.value); break;
+
     case 'timeout':
       showFb('⏱ ¡Tiempo!', '');
-      setTimeout(() => showFb(' ',''), 900);
+      setTimeout(() => showFb(' ', ''), 900);
       break;
-    case 'nextQ':
+
+    case 'nextQ': {
+      document.getElementById('wait-overlay').classList.remove('show');
       const el = document.getElementById('qtext');
       el.classList.add('fade');
       setTimeout(() => { el.textContent = msg.qtext; el.classList.remove('fade'); }, 200);
       buf = '';
       document.getElementById('ans-val').textContent = '?';
-      showFb(' ','');
+      showFb(' ', '');
       break;
-    case 'input':
-      // Ignorar eco propio — display ya es local e instantáneo
-      break;
+    }
+
     case 'clearInput':
-      if (msg.team === TEAM) { buf=''; document.getElementById('ans-val').textContent='?'; }
+      if (msg.team === TEAM) { buf = ''; document.getElementById('ans-val').textContent = '?'; }
       break;
+
     case 'correct':
       document.getElementById('sb').textContent = msg.sb;
       document.getElementById('sr').textContent = msg.sr;
-      if (msg.team === TEAM) { showFb('✅ ¡Correcto!','ok'); setTimeout(()=>showFb(' ',''),900); }
+      if (msg.team === TEAM) { showFb('✅ ¡Correcto!', 'ok'); setTimeout(() => showFb(' ',''), 900); }
       break;
+
     case 'wrong':
-      if (msg.team === TEAM) { showFb('❌ Incorrecto','w'); setTimeout(()=>showFb(' ',''),1300); }
+      if (msg.team === TEAM) { showFb('❌ Incorrecto', 'w'); setTimeout(() => showFb(' ',''), 1300); }
       break;
+
     case 'win':
       document.getElementById('over-overlay').classList.add('show');
-      document.getElementById('over-emoji').textContent = msg.team===TEAM ? '🥇' : '😔';
-      document.getElementById('over-title').textContent = msg.team===TEAM ? '¡Ganaron!' : 'Perdieron...';
+      document.getElementById('over-emoji').textContent = msg.team === TEAM ? '🥇' : '😔';
+      document.getElementById('over-title').textContent = msg.team === TEAM ? '¡Ganaron!' : 'Perdieron...';
       break;
+
     case 'restart':
       document.getElementById('over-overlay').classList.remove('show');
+      document.getElementById('wait-overlay').classList.remove('show');
       buf = '';
       document.getElementById('ans-val').textContent = '?';
       document.getElementById('sb').textContent = '0';
       document.getElementById('sr').textContent = '0';
       const qt = document.getElementById('qtext');
       qt.classList.add('fade');
-      setTimeout(()=>{ qt.textContent=msg.qtext; qt.classList.remove('fade'); },200);
-      showFb(' ','');
+      setTimeout(() => { qt.textContent = msg.qtext; qt.classList.remove('fade'); }, 200);
+      showFb(' ', '');
       break;
   }
 }
 
+// ── Numpad ──
 function np(d) {
-  // Mostrar inmediatamente sin esperar al servidor
-  if (buf.length < 4) {
-    buf += d;
-    document.getElementById('ans-val').textContent = buf || '?';
-  }
-  send({ type:'input', team:TEAM, digit:d });
+  if (buf.length < 4) { buf += d; document.getElementById('ans-val').textContent = buf || '?'; }
+  send({ type:'input', team: TEAM, digit: d });
 }
 function del() {
-  buf = buf.slice(0, -1);
+  buf = buf.slice(0,-1);
   document.getElementById('ans-val').textContent = buf || '?';
-  send({ type:'delete', team:TEAM });
+  send({ type:'delete', team: TEAM });
 }
-function sub()  { send({ type:'submit', team:TEAM }); }
+function sub() { send({ type:'submit', team: TEAM }); }
 
-// Soporte de teclado físico
-document.addEventListener('keydown', (e) => {
+document.addEventListener('keydown', e => {
+  if (document.getElementById('game-screen').style.display === 'none') return;
   if (e.key >= '0' && e.key <= '9') { np(e.key); e.preventDefault(); }
   else if (e.key === 'Backspace')    { del(); e.preventDefault(); }
   else if (e.key === 'Enter')        { sub(); e.preventDefault(); }
 });
 
+window.addEventListener('load', () => {
+  document.querySelectorAll('#numpad .nb').forEach(btn => {
+    const run = () => {
+      if (btn.dataset.np)  np(btn.dataset.np);
+      if (btn.dataset.del) del();
+      if (btn.dataset.sub) sub();
+    };
+    btn.addEventListener('pointerdown', e => {
+      e.preventDefault();
+      suppressClickUntil = Date.now() + 400;
+      run();
+    }, { passive:false });
+    btn.addEventListener('click', e => {
+      if (Date.now() < suppressClickUntil) { e.preventDefault(); return; }
+      run();
+    });
+  });
+});
+
 function updateTimer(v) {
   const el = document.getElementById('timer-num');
-  document.getElementById('tbar').style.width = (v/TS*100)+'%';
+  document.getElementById('tbar').style.width = (v/TS*100) + '%';
   el.textContent = v;
-  if(v<=8) el.className='urgent';
-  else if(v<=15) el.className='ok';
-  else el.className='';
+  el.className = v <= 8 ? 'urgent' : v <= 15 ? 'ok' : '';
 }
-
-function showFb(msg, cls) {
+function showFb(m, cls) {
   const e = document.getElementById('fb');
-  e.textContent = msg;
-  e.className = cls || '';
+  e.textContent = m; e.className = cls || '';
 }
-
 function setStatus(txt, ok) {
   const e = document.getElementById('conn-status');
-  e.textContent = txt;
-  e.className = ok ? 'ok' : '';
+  e.textContent = txt; e.className = ok ? 'ok' : '';
 }
-
-window.addEventListener('load', () => {
-  initFastPad();
-});
 </script>
-
-<div id="pause-overlay">
-  <div id="pause-card">
-    <div id="pause-emoji">⏸️</div>
-    <div id="pause-title">Juego en Pausa</div>
-    <div id="pause-sub">Esperando al profesor...</div>
-  </div>
-</div>
 </body>
 </html>

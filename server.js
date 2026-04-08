@@ -40,9 +40,25 @@ let gamePaused = false;
 /* ══════════════════════════════════════
    CLIENTES CONECTADOS
    tipo: 'screen' | 'blue' | 'red'
+   Soporte para múltiples jugadores por equipo
 ══════════════════════════════════════ */
-const clients = new Map(); // ws -> { type, id, name }
-let teamPlayers = { blue: [], red: [] };
+const clients = new Map(); // ws -> { type, name, id }
+let playerIdCounter = 0;
+
+// Jugadores activos por equipo: id -> { name, ws }
+const teamPlayers = { blue: new Map(), red: new Map() };
+
+function getTeamPlayerList(team) {
+  return Array.from(teamPlayers[team].values()).map(p => ({ id: p.id, name: p.name }));
+}
+
+function broadcastTeamUpdate() {
+  broadcastAll({
+    type: 'teamUpdate',
+    blue: getTeamPlayerList('blue'),
+    red:  getTeamPlayerList('red')
+  });
+}
 
 /* ══════════════════════════════════════
    GENERADOR DE PREGUNTAS
@@ -428,29 +444,7 @@ function broadcast(msg, exclude) {
 function broadcastAll(msg) { broadcast(msg, null); }
 function sendTo(ws, msg)   { if (ws.readyState===1) ws.send(JSON.stringify(msg)); }
 
-function sanitizeName(name, fallback) {
-  const clean = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 18);
-  return clean || fallback;
-}
-
-function getPlayersSnapshot() {
-  return {
-    blue: teamPlayers.blue.map(p => ({ id: p.id, name: p.name })),
-    red:  teamPlayers.red.map(p => ({ id: p.id, name: p.name }))
-  };
-}
-
-function broadcastPlayers() {
-  const players = getPlayersSnapshot();
-  broadcastAll({
-    type: 'playersUpdate',
-    blue: players.blue,
-    red: players.red
-  });
-}
-
 function sendState(ws) {
-  const players = getPlayersSnapshot();
   sendTo(ws, {
     type:  'state',
     qtext: G.qtext,
@@ -461,9 +455,7 @@ function sendState(ws) {
     over:  G.over,
     timer: G.timer,
     ib:    G.ib,
-    ir:    G.ir,
-    bluePlayers: players.blue,
-    redPlayers: players.red
+    ir:    G.ir
   });
 }
 
@@ -632,18 +624,22 @@ wss.on('connection', (ws) => {
 
       case 'ping': return; // heartbeat — no hacer nada
 
-      case 'register':
-        const isTeamPlayer = msg.role === 'blue' || msg.role === 'red';
-        const teamKey = msg.role === 'blue' ? 'blue' : (msg.role === 'red' ? 'red' : null);
-        const playerId = isTeamPlayer ? (String(msg.id || Math.random().toString(36).slice(2))) : null;
-        const playerName = isTeamPlayer ? sanitizeName(msg.name, msg.role === 'blue' ? 'Azul' : 'Rojo') : '';
-        clients.set(ws, { type: msg.role, id: playerId, name: playerName });
-        if (isTeamPlayer) {
-          teamPlayers[teamKey] = teamPlayers[teamKey].filter(p => p.id !== playerId);
-          teamPlayers[teamKey].push({ id: playerId, name: playerName });
+      case 'register': {
+        // Si role es 'player', asignar equipo aleatoriamente
+        let assignedRole = msg.role;
+        if (msg.role === 'player') {
+          // Balancear equipos: asignar al equipo con menos jugadores
+          const blueCount = teamPlayers.blue.size;
+          const redCount  = teamPlayers.red.size;
+          if (blueCount <= redCount) assignedRole = 'blue';
+          else assignedRole = 'red';
         }
-        if (msg.role === 'screen') {
-          // Si el juego estaba en curso al reconectar el screen, reanudar
+
+        const playerId = ++playerIdCounter;
+        const playerName = (msg.name || '').trim().slice(0, 16) || 'Pirata';
+        clients.set(ws, { type: assignedRole, name: playerName, id: playerId });
+
+        if (assignedRole === 'screen') {
           if (gameStarted && !G.over) {
             sendState(ws);
             if (!gamePaused && !timerInterval) startTimer();
@@ -653,18 +649,24 @@ wss.on('connection', (ws) => {
             sendState(ws);
           }
         } else {
+          // Registrar jugador en su equipo
+          teamPlayers[assignedRole].set(playerId, { id: playerId, name: playerName, ws });
+          // Decirle al jugador qué equipo le tocó y su id
+          sendTo(ws, { type: 'assigned', team: assignedRole, name: playerName, id: playerId });
           if (!gameStarted) {
             sendTo(ws, { type: 'waiting' });
           } else {
             sendState(ws);
             if (gamePaused) sendTo(ws, { type: 'pause', paused: true });
           }
+          broadcastTeamUpdate();
         }
-        console.log(`[+] Reconectado/Conectado: ${msg.role}${isTeamPlayer ? ' — ' + playerName : ''}`);
-        if (isTeamPlayer) {
-          broadcastPlayers();
+        console.log(`[+] Conectado: ${assignedRole} (${playerName})`);
+        if (assignedRole === 'blue' || assignedRole === 'red') {
+          broadcastAll({ type: 'playerJoined', role: assignedRole, name: playerName });
         }
         break;
+      }
 
       case 'input':
         handleInput(msg.team, msg.digit);
@@ -683,6 +685,8 @@ wss.on('connection', (ws) => {
         G = freshState();
         gameStarted = false;
         gamePaused = false;
+        teamPlayers.blue.clear();
+        teamPlayers.red.clear();
         broadcastAll({ type: 'waiting' });
         break;
 
@@ -710,10 +714,12 @@ wss.on('connection', (ws) => {
   ws.on('close', () => {
     const info = clients.get(ws);
     if (info) {
-      console.log(`[-] Desconectado: ${info.type}`);
+      console.log(`[-] Desconectado: ${info.type} (${info.name || ''})`);
+      // Solo notificar si era un jugador real (no la pantalla)
       if (info.type === 'blue' || info.type === 'red') {
-        teamPlayers[info.type] = teamPlayers[info.type].filter(p => p.id !== info.id);
-        broadcastPlayers();
+        teamPlayers[info.type].delete(info.id);
+        broadcastAll({ type: 'playerLeft', role: info.type, name: info.name, id: info.id });
+        broadcastTeamUpdate();
       }
       // Si el profesor (pantalla) se desconecta, esperar 8s antes de reiniciar
       // por si es un blip de red o recarga de página
@@ -749,7 +755,6 @@ wss.on('connection', (ws) => {
       G = freshState();
       gameStarted = false;
       gamePaused = false;
-      teamPlayers = { blue: [], red: [] };
       console.log('[*] Todos desconectados — juego reiniciado');
     }
   });
