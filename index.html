@@ -450,16 +450,44 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
    WEBSOCKET — conectar al servidor
 ══════════════════════════════════════ */
 const TS = 28;
-let ws, G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'' };
+
+let ws, G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'', blue:[], red:[] };
 
 
   // ── LOBBY ──
-  let blueReady = false, redReady = false;
+  let bluePlayers = [], redPlayers = [];
+
+  function namesLabel(players) {
+    if (!players.length) return 'esperando';
+    const names = players.map(p => p.name).join(', ');
+    return names.length > 34 ? names.slice(0, 31) + '...' : names;
+  }
 
   function updateLobby() {
-    document.getElementById('lstat-blue').textContent = blueReady ? '🔵 Azul: listo ✅' : '🔵 Azul: esperando';
-    document.getElementById('lstat-red').textContent  = redReady  ? '🔴 Rojo: listo ✅' : '🔴 Rojo: esperando';
-    document.getElementById('startBtn').disabled = !(blueReady && redReady);
+    document.getElementById('lstat-blue').textContent = bluePlayers.length ? `🔵 Azul: ${bluePlayers.length} listo(s)` : '🔵 Azul: esperando';
+    document.getElementById('lstat-red').textContent  = redPlayers.length  ? `🔴 Rojo: ${redPlayers.length} listo(s)` : '🔴 Rojo: esperando';
+    document.getElementById('startBtn').disabled = !(bluePlayers.length && redPlayers.length);
+
+    const cb = document.getElementById('conn-b');
+    const cr = document.getElementById('conn-r');
+    if (cb) {
+      cb.textContent = bluePlayers.length ? `👥 ${bluePlayers.length} jugador(es)` : '📱 Sin conectar';
+      cb.className = 'conn-badge ' + (bluePlayers.length ? 'online' : 'offline');
+      cb.title = bluePlayers.map(p => p.name).join(', ');
+    }
+    if (cr) {
+      cr.textContent = redPlayers.length ? `👥 ${redPlayers.length} jugador(es)` : '📱 Sin conectar';
+      cr.className = 'conn-badge ' + (redPlayers.length ? 'online' : 'offline');
+      cr.title = redPlayers.map(p => p.name).join(', ');
+    }
+  }
+
+  function setPlayers(payload) {
+    bluePlayers = Array.isArray(payload.blue) ? payload.blue : bluePlayers;
+    redPlayers  = Array.isArray(payload.red)  ? payload.red  : redPlayers;
+    G.blue = bluePlayers;
+    G.red = redPlayers;
+    updateLobby();
   }
 
   let selectedDiff = 'easy';
@@ -565,6 +593,7 @@ function handleMsg(msg) {
 
     case 'state':
       G = { ...G, ...msg };
+      setPlayers(msg);
       document.getElementById('qt').textContent = msg.qtext;
       document.getElementById('rn').textContent = msg.rnd;
       document.getElementById('sb').textContent = msg.sb;
@@ -573,6 +602,10 @@ function handleMsg(msg) {
       document.getElementById('dr').textContent = msg.ir || '?';
       updateRope(msg.pos);
       updateTimerUI(msg.timer);
+      break;
+
+    case 'players':
+      setPlayers(msg);
       break;
 
     case 'timer':
@@ -676,21 +709,6 @@ function handleMsg(msg) {
 
 
 
-    case 'playerJoined': {
-      const connEl = document.getElementById(msg.role==='blue'?'conn-b':'conn-r');
-      if(msg.role==='blue') blueReady=true; else redReady=true;
-      if(connEl){ connEl.textContent='✅ Conectado'; connEl.className='conn-badge online'; }
-      updateLobby();
-      break;
-    }
-    case 'playerLeft': {
-      const connEl2 = document.getElementById(msg.role==='blue'?'conn-b':'conn-r');
-      if(msg.role==='blue') blueReady=false; else redReady=false;
-      if(connEl2){ connEl2.textContent='📱 Sin conectar'; connEl2.className='conn-badge offline'; }
-      updateLobby();
-      break;
-    }
-
     case 'pause': {
       const pb = document.getElementById('pauseBtn');
       if (msg.paused) {
@@ -705,7 +723,6 @@ function handleMsg(msg) {
 
     case 'waiting':
       document.getElementById('lobby').classList.remove('hidden');
-      blueReady = false; redReady = false;
       updateLobby();
       break;
 
@@ -716,7 +733,7 @@ function handleMsg(msg) {
       document.getElementById('sr').textContent='0';
       document.getElementById('db').textContent='?';
       document.getElementById('dr').textContent='?';
-      G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'' };
+      G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'', blue:bluePlayers, red:redPlayers };
       smoothPos = 0;
       const qel = document.getElementById('qt');
       qel.classList.add('fade');
@@ -1011,9 +1028,64 @@ function spawnExplosion(x, y) {
 
 // triggerExplosion replaced by spawnExplosion
 
+
+function pirateSlots(count, dir) {
+  if (count <= 0) return [];
+  if (count === 1) return [{ x: 0, y: -0.18, s: 1 }];
+  if (count === 2) {
+    const slots = [{ x: -0.18, y: -0.18, s: 0.98 }, { x: 0.18, y: -0.18, s: 0.98 }];
+    if (dir < 0) slots.forEach(slot => { slot.x *= -1; });
+    return slots;
+  }
+  if (count === 3) {
+    const slots = [{ x: -0.30, y: -0.18, s: 0.96 }, { x: -0.05, y: -0.18, s: 0.98 }, { x: 0.22, y: -0.18, s: 0.96 }];
+    if (dir < 0) slots.forEach(slot => { slot.x *= -1; });
+    return slots;
+  }
+
+  const slots = [];
+  let remaining = count;
+  let row = 0;
+  while (remaining > 0) {
+    const perRow = Math.min(4, remaining);
+    const spread = perRow === 1 ? [0] : Array.from({ length: perRow }, (_, i) => -0.34 + (0.68 / (perRow - 1)) * i);
+    const y = 0.16 + row * 0.08;
+    const scale = Math.max(0.66, 0.92 - row * 0.08 - Math.max(0, perRow - 3) * 0.03);
+    spread.forEach(x => slots.push({ x, y, s: scale }));
+    remaining -= perRow;
+    row += 1;
+  }
+  if (dir < 0) slots.forEach(slot => { slot.x *= -1; });
+  return slots.slice(0, count);
+}
+
+function drawPirateName(name, x, y, maxW, color) {
+  if (!name) return;
+  cx.save();
+  cx.font = '900 14px Arial';
+  let text = String(name);
+  while (cx.measureText(text).width > maxW && text.length > 3) text = text.slice(0, -1);
+  if (text !== name) text = text.slice(0, -1) + '…';
+  const padX = 8;
+  const w = Math.min(maxW + padX * 2, cx.measureText(text).width + padX * 2);
+  const h = 22;
+  cx.fillStyle = 'rgba(0,0,0,0.38)';
+  cx.beginPath(); cx.roundRect(x - w/2, y - h/2 + 2, w, h, 10); cx.fill();
+  cx.fillStyle = color;
+  cx.beginPath(); cx.roundRect(x - w/2, y - h/2, w, h, 10); cx.fill();
+  cx.strokeStyle = 'rgba(255,255,255,0.65)';
+  cx.lineWidth = 1.2;
+  cx.stroke();
+  cx.textAlign = 'center';
+  cx.textBaseline = 'middle';
+  cx.fillStyle = '#fff';
+  cx.fillText(text, x, y + 0.5);
+  cx.restore();
+}
+
 // ── DRAW SHIP ──
 // dir=1 faces right (blue), dir=-1 faces left (red)
-function drawShip(x, y, color, accent, dir, bob) {
+function drawShip(x, y, color, accent, dir, bob, players) {
   const W=cnv.width, H=cnv.height;
   const SW = W * 0.22;   // ship half-width
   const SH = H * 0.32;   // ship height reference
@@ -1405,8 +1477,8 @@ function drawScene() {
   const redX  = W*0.78;
 
   // Draw ships
-  drawShip(blueX, WY, '#1565C0','#0D47A1',  1,  shipBob);
-  drawShip(redX,  WY, '#C62828','#B71C1C', -1, -shipBob);
+  drawShip(blueX, WY, '#1565C0','#0D47A1',  1,  shipBob, G.blue || []);
+  drawShip(redX,  WY, '#C62828','#B71C1C', -1, -shipBob, G.red || []);
 
   // ── CANNON SMOKE ──
   cannonSmoke = cannonSmoke.filter(p=>{

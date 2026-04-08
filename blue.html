@@ -212,14 +212,41 @@ html, body {
 #pause-emoji { font-size:3rem; }
 #pause-title { font-family:'Fredoka One',cursive; font-size:2rem; color:#1A237E; margin-top:6px; }
 #pause-sub { color:#90A4AE; font-weight:800; font-size:.9rem; margin-top:4px; }
+
+#name-bar { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:10px 18px 0; padding:10px 14px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.2); border-radius:14px; color:white; font-weight:800; }
+#team-list { font-size:.82rem; opacity:.92; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#join-overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(4,18,48,.84); backdrop-filter:blur(6px); z-index:999; }
+#join-card { width:min(92vw,360px); background:white; border-radius:22px; padding:26px 22px; text-align:center; box-shadow:0 24px 60px rgba(0,0,0,.35); }
+#join-emoji { font-size:3rem; margin-bottom:8px; }
+#join-title { font-family:'Fredoka One',cursive; font-size:1.6rem; color:#0D47A1; margin-bottom:6px; }
+#join-sub { color:#607D8B; font-weight:700; font-size:.92rem; margin-bottom:16px; }
+#player-name { width:100%; padding:14px 16px; border-radius:14px; border:2px solid #BBDEFB; font-size:1rem; font-weight:800; outline:none; margin-bottom:12px; }
+#player-name:focus { border-color:#1976D2; }
+#join-btn { width:100%; border:none; border-radius:14px; padding:14px; font-family:'Fredoka One',cursive; font-size:1rem; color:white; cursor:pointer; box-shadow:0 8px 22px rgba(0,0,0,.18); background:linear-gradient(135deg,#1565C0,#42A5F5); }
+#join-help { margin-top:10px; color:#78909C; font-size:.82rem; font-weight:700; }
+body.waiting #numpad { opacity:.5; pointer-events:none; }
+
 </style>
 </head>
-<body>
+<body class="waiting">
+
+<div id="join-overlay">
+  <div id="join-card">
+    <div id="join-emoji">🔵</div>
+    <div id="join-title">Tu nombre pirata</div>
+    <div id="join-sub">Escríbelo una sola vez y entrarás a Equipo Azul.</div>
+    <input id="player-name" maxlength="18" placeholder="Ej: Sergio" autocomplete="nickname">
+    <button id="join-btn" onclick="joinGame()">⚓ Entrar al equipo</button>
+    <div id="join-help">Tu nombre aparecerá arriba del pirata en la pantalla principal.</div>
+  </div>
+</div>
 
 <div id="header">
   <h1>🔵 Equipo 1</h1>
   <div id="conn-status">Conectando...</div>
 </div>
+
+<div id="name-bar"><span id="player-badge">Sin nombre</span><span id="team-list">Esperando jugadores...</span></div>
 
 <div id="score-bar">
   <div class="sc-chip b">🔵 <span id="sb">0</span></div>
@@ -263,8 +290,14 @@ html, body {
 
 <script>
 const TEAM = 'b';
+const ROLE = 'blue';
+const NAME_KEY = 'tug-player-name-blue';
+const ID_KEY = 'tug-player-id-blue';
 const TS   = 38;
 let ws, buf = '';
+let playerName = localStorage.getItem(NAME_KEY) || '';
+let playerId = localStorage.getItem(ID_KEY) || (Date.now().toString(36) + Math.random().toString(36).slice(2,8));
+localStorage.setItem(ID_KEY, playerId);
 
 let pingInterval = null;
 
@@ -308,7 +341,8 @@ function connectWS() {
   ws = new WebSocket(protocol + host);
 
   ws.onopen = () => {
-    ws.send(JSON.stringify({ type:'register', role:'blue' }));
+    setStatus(playerName ? '✅ Conectado' : '✍️ Escribe tu nombre', !!playerName);
+    if (playerName) registerPlayer();
     setStatus('✅ Conectado', true);
     // Heartbeat para mantener la conexión viva en Render
     clearInterval(pingInterval);
@@ -337,9 +371,53 @@ document.addEventListener('visibilitychange', () => {
 
 function send(obj) { if(ws && ws.readyState===1) ws.send(JSON.stringify(obj)); }
 
+
+function registerPlayer() {
+  if (!playerName || !ws || ws.readyState !== 1) return;
+  ws.send(JSON.stringify({ type:'register', role:ROLE, name:playerName, clientId:playerId }));
+}
+
+function joinGame() {
+  const input = document.getElementById('player-name');
+  const value = input.value.trim().replace(/\s+/g, ' ').slice(0, 18);
+  if (!value) { input.focus(); return; }
+  playerName = value;
+  localStorage.setItem(NAME_KEY, playerName);
+  document.getElementById('player-badge').textContent = '🏴‍☠️ ' + playerName;
+  if (ws && ws.readyState === 1) registerPlayer();
+}
+
+function setWaitingMode(isWaiting) {
+  document.body.classList.toggle('waiting', isWaiting);
+}
+
+function updateRoster(msg) {
+  const mine = TEAM === 'b' ? (msg.blue || []) : (msg.red || []);
+  const others = mine.map(p => p.name).join(', ');
+  document.getElementById('team-list').textContent = mine.length ? `Equipo: ${others}` : 'Esperando jugadores...';
+}
+
+function setupJoinUI() {
+  const input = document.getElementById('player-name');
+  input.value = playerName;
+  document.getElementById('player-badge').textContent = playerName ? '🏴‍☠️ ' + playerName : 'Sin nombre';
+  if (!playerName) setTimeout(() => input.focus(), 80);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') joinGame(); });
+  if (playerName) document.getElementById('join-overlay').style.display = 'none';
+}
+
 function handle(msg) {
   switch(msg.type) {
+    case 'registered':
+      document.getElementById('join-overlay').style.display = 'none';
+      document.getElementById('player-badge').textContent = '🏴‍☠️ ' + (msg.name || playerName);
+      setWaitingMode(false);
+      break;
+    case 'players':
+      updateRoster(msg);
+      break;
     case 'state':
+      updateRoster(msg);
       document.getElementById('qtext').textContent = msg.qtext;
       document.getElementById('sb').textContent = msg.sb;
       document.getElementById('sr').textContent = msg.sr;
@@ -351,6 +429,10 @@ function handle(msg) {
       const po = document.getElementById('pause-overlay');
       if (msg.paused) po.classList.add('show');
       else po.classList.remove('show');
+      break;
+
+    case 'waiting':
+      updateRoster(msg);
       break;
 
     case 'hostLeft':
@@ -409,6 +491,7 @@ function handle(msg) {
 }
 
 function np(d) {
+  if (!playerName) return document.getElementById('join-overlay').style.display = 'flex';
   // Mostrar inmediatamente sin esperar al servidor
   if (buf.length < 4) {
     buf += d;
@@ -417,11 +500,12 @@ function np(d) {
   send({ type:'input', team:TEAM, digit:d });
 }
 function del() {
+  if (!playerName) return;
   buf = buf.slice(0, -1);
   document.getElementById('ans-val').textContent = buf || '?';
   send({ type:'delete', team:TEAM });
 }
-function sub()  { send({ type:'submit', team:TEAM }); }
+function sub()  { if (!playerName) return; send({ type:'submit', team:TEAM }); }
 
 // Soporte de teclado físico
 document.addEventListener('keydown', (e) => {
@@ -453,6 +537,7 @@ function setStatus(txt, ok) {
 
 window.addEventListener('load', () => {
   initFastPad();
+  setupJoinUI();
   connectWS();
 });
 </script>
