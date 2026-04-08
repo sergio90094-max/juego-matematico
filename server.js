@@ -548,18 +548,19 @@ function handleSubmit(team) {
   }
 }
 
-function handleInput(team, digit) {
+function handleInput(team, digit, senderWs) {
   if (G.over) return;
   const k = team === 'b' ? 'ib' : 'ir';
   if (G[k].length >= 4) return;
   G[k] += digit;
-  broadcastAll({ type: 'input', team, value: G[k] });
+  // Solo mandar a la pantalla del profesor, NO devolver al jugador emisor
+  broadcast({ type: 'input', team, value: G[k] }, senderWs);
 }
 
-function handleDelete(team) {
+function handleDelete(team, senderWs) {
   const k = team === 'b' ? 'ib' : 'ir';
   G[k] = G[k].slice(0, -1);
-  broadcastAll({ type: 'input', team, value: G[k] });
+  broadcast({ type: 'input', team, value: G[k] }, senderWs);
 }
 
 /* ══════════════════════════════════════
@@ -812,8 +813,8 @@ function onWsConnection(ws) {
         break;
       }
 
-      case 'input':   handleInput(msg.team, msg.digit); break;
-      case 'delete':  handleDelete(msg.team); break;
+      case 'input':   handleInput(msg.team, msg.digit, ws); break;
+      case 'delete':  handleDelete(msg.team, ws); break;
       case 'submit':  handleSubmit(msg.team); break;
 
       case 'restart':

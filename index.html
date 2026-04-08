@@ -1224,32 +1224,36 @@ function drawShip(x, y, color, accent, dir, bob, players=[]) {
       i===0 ? color : (i===1 ? accent : color),
       color, '#111', AF+i*25, sc2);
 
-    // ── Nombre del jugador encima del pirata ──
+    // ── Nombre del jugador encima del sombrero ──
     if (players[i]) {
       const nameStr = players[i].name;
-      const nameY   = pirY - SH*0.32; // encima de la cabeza
-      const pad = 6, fontSize = Math.max(9, Math.min(13, W*0.013));
+      // La cima del sombrero está en pirY + sc2*(-128) aprox, añadimos margen
+      const hatTop  = pirY + sc2 * (-128) - 6;
+      const pad = 5, fontSize = Math.max(9, Math.min(12, W * 0.012));
       cx.font = `bold ${fontSize}px "Nunito","Fredoka One",sans-serif`;
       const tw = cx.measureText(nameStr).width;
-      const bw = tw + pad*2, bh = fontSize + pad;
-      const bx = pirX - bw/2, by = nameY - bh/2;
+      const bw = tw + pad * 2, bh = fontSize + pad;
+      const bx = pirX - bw / 2, by = hatTop - bh;
 
-      // Fondo etiqueta
+      // Fondo etiqueta con sombra
+      cx.shadowColor = 'rgba(0,0,0,0.5)';
+      cx.shadowBlur  = 4;
       cx.beginPath();
-      cx.roundRect(bx, by, bw, bh, 5);
-      cx.fillStyle = 'rgba(0,0,0,0.72)';
+      cx.roundRect(bx, by, bw, bh, 4);
+      cx.fillStyle = color === '#1565C0' ? 'rgba(13,71,161,0.92)' : 'rgba(183,28,28,0.92)';
       cx.fill();
-      cx.strokeStyle = color === '#1565C0' ? '#64B5F6' : '#EF9A9A';
+      cx.shadowBlur = 0;
+      cx.strokeStyle = color === '#1565C0' ? '#90CAF9' : '#EF9A9A';
       cx.lineWidth = 1.5;
       cx.stroke();
 
       // Texto nombre
       cx.fillStyle = 'white';
-      cx.textAlign  = 'center';
-      cx.textBaseline = 'middle';
-      cx.fillText(nameStr, pirX, nameY);
-      cx.textAlign = 'left';
-      cx.textBaseline = 'alphabetic';
+      cx.textAlign     = 'center';
+      cx.textBaseline  = 'middle';
+      cx.fillText(nameStr, pirX, by + bh / 2);
+      cx.textAlign     = 'left';
+      cx.textBaseline  = 'alphabetic';
     }
   });
 
@@ -1660,6 +1664,13 @@ window.addEventListener('load', () => {
   spawnStars();
   setupAudio();
   connectWS();
+  // Retry music on first user interaction (browser autoplay policy)
+  const tryPlay = () => {
+    const a = document.getElementById('bg-audio');
+    if (a && musicOn) a.play().catch(() => {});
+  };
+  document.addEventListener('pointerdown', tryPlay, { once: true });
+  document.addEventListener('keydown',     tryPlay, { once: true });
 });
 
 function setupAudio() {
