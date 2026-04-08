@@ -450,44 +450,23 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
    WEBSOCKET — conectar al servidor
 ══════════════════════════════════════ */
 const TS = 28;
-
-let ws, G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'', blue:[], red:[] };
-
+let ws;
+let bluePlayers = [];
+let redPlayers = [];
+let G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'', bluePlayers:[], redPlayers:[] };
 
   // ── LOBBY ──
-  let bluePlayers = [], redPlayers = [];
-
-  function namesLabel(players) {
-    if (!players.length) return 'esperando';
-    const names = players.map(p => p.name).join(', ');
-    return names.length > 34 ? names.slice(0, 31) + '...' : names;
-  }
 
   function updateLobby() {
-    document.getElementById('lstat-blue').textContent = bluePlayers.length ? `🔵 Azul: ${bluePlayers.length} listo(s)` : '🔵 Azul: esperando';
-    document.getElementById('lstat-red').textContent  = redPlayers.length  ? `🔴 Rojo: ${redPlayers.length} listo(s)` : '🔴 Rojo: esperando';
-    document.getElementById('startBtn').disabled = !(bluePlayers.length && redPlayers.length);
-
+    const blueCount = bluePlayers.length;
+    const redCount = redPlayers.length;
+    document.getElementById('lstat-blue').textContent = `🔵 Azul: ${blueCount} jugador${blueCount===1?'':'es'}`;
+    document.getElementById('lstat-red').textContent  = `🔴 Rojo: ${redCount} jugador${redCount===1?'':'es'}`;
     const cb = document.getElementById('conn-b');
     const cr = document.getElementById('conn-r');
-    if (cb) {
-      cb.textContent = bluePlayers.length ? `👥 ${bluePlayers.length} jugador(es)` : '📱 Sin conectar';
-      cb.className = 'conn-badge ' + (bluePlayers.length ? 'online' : 'offline');
-      cb.title = bluePlayers.map(p => p.name).join(', ');
-    }
-    if (cr) {
-      cr.textContent = redPlayers.length ? `👥 ${redPlayers.length} jugador(es)` : '📱 Sin conectar';
-      cr.className = 'conn-badge ' + (redPlayers.length ? 'online' : 'offline');
-      cr.title = redPlayers.map(p => p.name).join(', ');
-    }
-  }
-
-  function setPlayers(payload) {
-    bluePlayers = Array.isArray(payload.blue) ? payload.blue : bluePlayers;
-    redPlayers  = Array.isArray(payload.red)  ? payload.red  : redPlayers;
-    G.blue = bluePlayers;
-    G.red = redPlayers;
-    updateLobby();
+    if (cb) { cb.textContent = blueCount ? `✅ ${blueCount} conectado${blueCount===1?'':'s'}` : '📱 Sin conectar'; cb.className = 'conn-badge ' + (blueCount ? 'online' : 'offline'); }
+    if (cr) { cr.textContent = redCount ? `✅ ${redCount} conectado${redCount===1?'':'s'}` : '📱 Sin conectar'; cr.className = 'conn-badge ' + (redCount ? 'online' : 'offline'); }
+    document.getElementById('startBtn').disabled = !(blueCount > 0 && redCount > 0);
   }
 
   let selectedDiff = 'easy';
@@ -593,7 +572,9 @@ function handleMsg(msg) {
 
     case 'state':
       G = { ...G, ...msg };
-      setPlayers(msg);
+      bluePlayers = msg.bluePlayers || [];
+      redPlayers = msg.redPlayers || [];
+      updateLobby();
       document.getElementById('qt').textContent = msg.qtext;
       document.getElementById('rn').textContent = msg.rnd;
       document.getElementById('sb').textContent = msg.sb;
@@ -602,10 +583,6 @@ function handleMsg(msg) {
       document.getElementById('dr').textContent = msg.ir || '?';
       updateRope(msg.pos);
       updateTimerUI(msg.timer);
-      break;
-
-    case 'players':
-      setPlayers(msg);
       break;
 
     case 'timer':
@@ -709,6 +686,13 @@ function handleMsg(msg) {
 
 
 
+    case 'playersUpdate': {
+      bluePlayers = msg.blue || [];
+      redPlayers = msg.red || [];
+      updateLobby();
+      break;
+    }
+
     case 'pause': {
       const pb = document.getElementById('pauseBtn');
       if (msg.paused) {
@@ -733,7 +717,7 @@ function handleMsg(msg) {
       document.getElementById('sr').textContent='0';
       document.getElementById('db').textContent='?';
       document.getElementById('dr').textContent='?';
-      G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'', blue:bluePlayers, red:redPlayers };
+      G = { pos:0, rnd:1, sb:0, sr:0, over:false, timer:TS, ib:'', ir:'' };
       smoothPos = 0;
       const qel = document.getElementById('qt');
       qel.classList.add('fade');
@@ -1028,64 +1012,9 @@ function spawnExplosion(x, y) {
 
 // triggerExplosion replaced by spawnExplosion
 
-
-function pirateSlots(count, dir) {
-  if (count <= 0) return [];
-  if (count === 1) return [{ x: 0, y: -0.18, s: 1 }];
-  if (count === 2) {
-    const slots = [{ x: -0.18, y: -0.18, s: 0.98 }, { x: 0.18, y: -0.18, s: 0.98 }];
-    if (dir < 0) slots.forEach(slot => { slot.x *= -1; });
-    return slots;
-  }
-  if (count === 3) {
-    const slots = [{ x: -0.30, y: -0.18, s: 0.96 }, { x: -0.05, y: -0.18, s: 0.98 }, { x: 0.22, y: -0.18, s: 0.96 }];
-    if (dir < 0) slots.forEach(slot => { slot.x *= -1; });
-    return slots;
-  }
-
-  const slots = [];
-  let remaining = count;
-  let row = 0;
-  while (remaining > 0) {
-    const perRow = Math.min(4, remaining);
-    const spread = perRow === 1 ? [0] : Array.from({ length: perRow }, (_, i) => -0.34 + (0.68 / (perRow - 1)) * i);
-    const y = 0.16 + row * 0.08;
-    const scale = Math.max(0.66, 0.92 - row * 0.08 - Math.max(0, perRow - 3) * 0.03);
-    spread.forEach(x => slots.push({ x, y, s: scale }));
-    remaining -= perRow;
-    row += 1;
-  }
-  if (dir < 0) slots.forEach(slot => { slot.x *= -1; });
-  return slots.slice(0, count);
-}
-
-function drawPirateName(name, x, y, maxW, color) {
-  if (!name) return;
-  cx.save();
-  cx.font = '900 14px Arial';
-  let text = String(name);
-  while (cx.measureText(text).width > maxW && text.length > 3) text = text.slice(0, -1);
-  if (text !== name) text = text.slice(0, -1) + '…';
-  const padX = 8;
-  const w = Math.min(maxW + padX * 2, cx.measureText(text).width + padX * 2);
-  const h = 22;
-  cx.fillStyle = 'rgba(0,0,0,0.38)';
-  cx.beginPath(); cx.roundRect(x - w/2, y - h/2 + 2, w, h, 10); cx.fill();
-  cx.fillStyle = color;
-  cx.beginPath(); cx.roundRect(x - w/2, y - h/2, w, h, 10); cx.fill();
-  cx.strokeStyle = 'rgba(255,255,255,0.65)';
-  cx.lineWidth = 1.2;
-  cx.stroke();
-  cx.textAlign = 'center';
-  cx.textBaseline = 'middle';
-  cx.fillStyle = '#fff';
-  cx.fillText(text, x, y + 0.5);
-  cx.restore();
-}
-
 // ── DRAW SHIP ──
 // dir=1 faces right (blue), dir=-1 faces left (red)
-function drawShip(x, y, color, accent, dir, bob, players) {
+function drawShip(x, y, color, accent, dir, bob) {
   const W=cnv.width, H=cnv.height;
   const SW = W * 0.22;   // ship half-width
   const SH = H * 0.32;   // ship height reference
@@ -1274,11 +1203,39 @@ function drawShip(x, y, color, accent, dir, bob, players) {
 
   // ── PIRATES ON DECK ──
   const sc2 = Math.min(W/900, H/350) * 0.9;
-  const ppos = dir>0 ? [-0.3,-0.05,0.22] : [0.3,0.05,-0.22];
-  ppos.forEach((px,i)=>{
-    figure(SW*px, -SH*0.18, dir,
-      i===0 ? color : (i===1 ? accent : color),
+  const players = dir > 0 ? bluePlayers : redPlayers;
+  const renderPlayers = players.length ? players : [{ name:'' }];
+  const count = renderPlayers.length;
+  const span = Math.min(0.72, 0.18 + count * 0.11);
+  renderPlayers.forEach((player, i) => {
+    const t = count === 1 ? 0.5 : i / (count - 1);
+    const pxNorm = dir > 0 ? (-span / 2 + t * span) : (span / 2 - t * span);
+    const bob = Math.sin(AF * 0.05 + i * 0.9) * 2.5;
+    const px = SW * pxNorm;
+    figure(px, -SH*0.18 + bob, dir,
+      i % 2 === 0 ? color : accent,
       color, '#111', AF+i*25, sc2);
+    if (player.name) {
+      cx.save();
+      cx.font = `900 ${Math.max(12, Math.min(18, W*0.016))}px Nunito`;
+      cx.textAlign = 'center';
+      cx.textBaseline = 'middle';
+      const labelY = -SH*0.18 - 128*sc2 + bob;
+      const textW = cx.measureText(player.name).width;
+      const padX = 8, padY = 5;
+      const boxW = textW + padX*2;
+      const boxH = Math.max(22, W*0.026);
+      cx.beginPath();
+      cx.roundRect(px - boxW/2, labelY - boxH/2, boxW, boxH, 10);
+      cx.fillStyle = 'rgba(255,255,255,0.92)';
+      cx.fill();
+      cx.strokeStyle = dir > 0 ? '#1565C0' : '#C62828';
+      cx.lineWidth = 2;
+      cx.stroke();
+      cx.fillStyle = '#102027';
+      cx.fillText(player.name, px, labelY + 1);
+      cx.restore();
+    }
   });
 
   cx.restore();
@@ -1477,8 +1434,8 @@ function drawScene() {
   const redX  = W*0.78;
 
   // Draw ships
-  drawShip(blueX, WY, '#1565C0','#0D47A1',  1,  shipBob, G.blue || []);
-  drawShip(redX,  WY, '#C62828','#B71C1C', -1, -shipBob, G.red || []);
+  drawShip(blueX, WY, '#1565C0','#0D47A1',  1,  shipBob);
+  drawShip(redX,  WY, '#C62828','#B71C1C', -1, -shipBob);
 
   // ── CANNON SMOKE ──
   cannonSmoke = cannonSmoke.filter(p=>{

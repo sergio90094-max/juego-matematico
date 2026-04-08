@@ -8,7 +8,6 @@ const http    = require('http');
 const fs      = require('fs');
 const path    = require('path');
 const { WebSocketServer } = require('ws');
-const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 
@@ -42,34 +41,8 @@ let gamePaused = false;
    CLIENTES CONECTADOS
    tipo: 'screen' | 'blue' | 'red'
 ══════════════════════════════════════ */
-
-const clients = new Map(); // ws -> { type, team, clientId, name }
-const teamPlayers = { b: new Map(), r: new Map() }; // clientId -> { clientId, name, ws }
-
-function makeId() {
-  return crypto.randomBytes(8).toString('hex');
-}
-
-function cleanName(name) {
-  const safe = String(name || '')
-    .replace(/[\r\n\t]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 18);
-  return safe || 'Pirata';
-}
-
-
-function playersPayload() {
-  return {
-    blue: [...teamPlayers.b.values()].map(p => ({ id: p.clientId, name: p.name })),
-    red:  [...teamPlayers.r.values()].map(p => ({ id: p.clientId, name: p.name }))
-  };
-}
-
-function attachPlayers(msg) {
-  return { ...msg, ...playersPayload() };
-}
+const clients = new Map(); // ws -> { type, id, name }
+let teamPlayers = { blue: [], red: [] };
 
 /* ══════════════════════════════════════
    GENERADOR DE PREGUNTAS
@@ -455,40 +428,59 @@ function broadcast(msg, exclude) {
 function broadcastAll(msg) { broadcast(msg, null); }
 function sendTo(ws, msg)   { if (ws.readyState===1) ws.send(JSON.stringify(msg)); }
 
-function sendState(ws) {
-  sendTo(ws, attachPlayers({
-    type:  'state',
-    qtext: G.qtext,
-    pos:   G.pos,
-    rnd:   G.rnd,
-    sb:    G.sb,
-    sr:    G.sr,
-    over:  G.over,
-    timer: G.timer,
-    ib:    G.ib,
-    ir:    G.ir
-  }));
+function sanitizeName(name, fallback) {
+  const clean = String(name || '').replace(/\s+/g, ' ').trim().slice(0, 18);
+  return clean || fallback;
 }
 
-function broadcastState() {
-  const msg = attachPlayers({
-    type:  'state',
-    qtext: G.qtext,
-    pos:   G.pos,
-    rnd:   G.rnd,
-    sb:    G.sb,
-    sr:    G.sr,
-    over:  G.over,
-    timer: G.timer,
-    ib:    G.ib,
-    ir:    G.ir
-  });
-  broadcastAll(msg);
+function getPlayersSnapshot() {
+  return {
+    blue: teamPlayers.blue.map(p => ({ id: p.id, name: p.name })),
+    red:  teamPlayers.red.map(p => ({ id: p.id, name: p.name }))
+  };
 }
 
 function broadcastPlayers() {
-  const p = playersPayload();
-  broadcastAll({ type: 'players', ...p });
+  const players = getPlayersSnapshot();
+  broadcastAll({
+    type: 'playersUpdate',
+    blue: players.blue,
+    red: players.red
+  });
+}
+
+function sendState(ws) {
+  const players = getPlayersSnapshot();
+  sendTo(ws, {
+    type:  'state',
+    qtext: G.qtext,
+    pos:   G.pos,
+    rnd:   G.rnd,
+    sb:    G.sb,
+    sr:    G.sr,
+    over:  G.over,
+    timer: G.timer,
+    ib:    G.ib,
+    ir:    G.ir,
+    bluePlayers: players.blue,
+    redPlayers: players.red
+  });
+}
+
+function broadcastState() {
+  const msg = {
+    type:  'state',
+    qtext: G.qtext,
+    pos:   G.pos,
+    rnd:   G.rnd,
+    sb:    G.sb,
+    sr:    G.sr,
+    over:  G.over,
+    timer: G.timer,
+    ib:    G.ib,
+    ir:    G.ir
+  };
+  broadcastAll(msg);
 }
 
 /* ══════════════════════════════════════
@@ -640,51 +632,39 @@ wss.on('connection', (ws) => {
 
       case 'ping': return; // heartbeat — no hacer nada
 
-
-case 'register': {
-  const role = msg.role;
-  if (role === 'blue' || role === 'red') {
-    const team = role === 'blue' ? 'b' : 'r';
-    const clientId = msg.clientId || makeId();
-    const name = cleanName(msg.name);
-
-    for (const t of ['b', 'r']) {
-      const existing = teamPlayers[t].get(clientId);
-      if (existing && existing.ws && existing.ws !== ws) {
-        try { existing.ws.close(); } catch {}
-      }
-      if (t !== team && existing) teamPlayers[t].delete(clientId);
-    }
-
-    teamPlayers[team].set(clientId, { clientId, name, ws });
-    clients.set(ws, { type: role, team, clientId, name });
-    sendTo(ws, { type: 'registered', team, clientId, name });
-
-    if (!gameStarted) {
-      sendTo(ws, { type: 'waiting' });
-    } else {
-      sendState(ws);
-      if (gamePaused) sendTo(ws, { type: 'pause', paused: true });
-    }
-    console.log(`[+] Reconectado/Conectado: ${role} (${name})`);
-    broadcastPlayers();
-  } else {
-    clients.set(ws, { type: role || null });
-    if (role === 'screen') {
-      if (gameStarted && !G.over) {
-        sendState(ws);
-        if (!gamePaused && !timerInterval) startTimer();
-      } else if (!gameStarted) {
-        sendTo(ws, { type: 'waiting' });
-        broadcastPlayers();
-      } else {
-        sendState(ws);
-      }
-    }
-    console.log(`[+] Reconectado/Conectado: ${role}`);
-  }
-  break;
-}
+      case 'register':
+        const isTeamPlayer = msg.role === 'blue' || msg.role === 'red';
+        const teamKey = msg.role === 'blue' ? 'blue' : (msg.role === 'red' ? 'red' : null);
+        const playerId = isTeamPlayer ? (String(msg.id || Math.random().toString(36).slice(2))) : null;
+        const playerName = isTeamPlayer ? sanitizeName(msg.name, msg.role === 'blue' ? 'Azul' : 'Rojo') : '';
+        clients.set(ws, { type: msg.role, id: playerId, name: playerName });
+        if (isTeamPlayer) {
+          teamPlayers[teamKey] = teamPlayers[teamKey].filter(p => p.id !== playerId);
+          teamPlayers[teamKey].push({ id: playerId, name: playerName });
+        }
+        if (msg.role === 'screen') {
+          // Si el juego estaba en curso al reconectar el screen, reanudar
+          if (gameStarted && !G.over) {
+            sendState(ws);
+            if (!gamePaused && !timerInterval) startTimer();
+          } else if (!gameStarted) {
+            sendTo(ws, { type: 'waiting' });
+          } else {
+            sendState(ws);
+          }
+        } else {
+          if (!gameStarted) {
+            sendTo(ws, { type: 'waiting' });
+          } else {
+            sendState(ws);
+            if (gamePaused) sendTo(ws, { type: 'pause', paused: true });
+          }
+        }
+        console.log(`[+] Reconectado/Conectado: ${msg.role}${isTeamPlayer ? ' — ' + playerName : ''}`);
+        if (isTeamPlayer) {
+          broadcastPlayers();
+        }
+        break;
 
       case 'input':
         handleInput(msg.team, msg.digit);
@@ -704,7 +684,6 @@ case 'register': {
         gameStarted = false;
         gamePaused = false;
         broadcastAll({ type: 'waiting' });
-        broadcastPlayers();
         break;
 
       case 'ping': break; // heartbeat
@@ -721,7 +700,7 @@ case 'register': {
           gameStarted = true;
           gamePaused = false;
           G = freshState();
-          broadcastAll(attachPlayers({ type: 'restart', qtext: G.qtext }));
+          broadcastAll({ type: 'restart', qtext: G.qtext });
           startTimer();
         }
         break;
@@ -729,52 +708,48 @@ case 'register': {
   });
 
   ws.on('close', () => {
-
-const info = clients.get(ws);
-if (info) {
-  console.log(`[-] Desconectado: ${info.type}`);
-  if (info.team && info.clientId) {
-    const current = teamPlayers[info.team].get(info.clientId);
-    if (current && current.ws === ws) {
-      teamPlayers[info.team].delete(info.clientId);
-      broadcastPlayers();
-    }
-  }
-  // Si el profesor (pantalla) se desconecta, esperar 8s antes de reiniciar
-  // por si es un blip de red o recarga de página
-  if (info.type === 'screen') {
-    // Pausar el timer durante el grace period sin alterar el estado
-    clearInterval(timerInterval);
-    timerInterval = null;
-    console.log('[*] Profesor desconectado — esperando reconexión (8s)...');
-    setTimeout(() => {
-      // Si ya hay un screen nuevo conectado, no hacer nada
-      let screenBack = false;
-      for (const [, c] of clients) {
-        if (c.type === 'screen') { screenBack = true; break; }
-      }
-      if (!screenBack) {
-        G = freshState();
-        gameStarted = false;
-        gamePaused = false;
-        broadcastAll({ type: 'hostLeft' });
+    const info = clients.get(ws);
+    if (info) {
+      console.log(`[-] Desconectado: ${info.type}`);
+      if (info.type === 'blue' || info.type === 'red') {
+        teamPlayers[info.type] = teamPlayers[info.type].filter(p => p.id !== info.id);
         broadcastPlayers();
-        console.log('[*] Profesor no reconectó — juego reiniciado');
-      } else {
-        console.log('[*] Profesor reconectó — juego continúa');
       }
-    }, 8000);
-  }
-}
-clients.delete(ws);
+      // Si el profesor (pantalla) se desconecta, esperar 8s antes de reiniciar
+      // por si es un blip de red o recarga de página
+      if (info.type === 'screen') {
+        // Pausar el timer durante el grace period sin alterar el estado
+        const savedTimer = timerInterval;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        const disconnectTime = Date.now();
+        console.log('[*] Profesor desconectado — esperando reconexión (8s)...');
+        setTimeout(() => {
+          // Si ya hay un screen nuevo conectado, no hacer nada
+          let screenBack = false;
+          for (const [, c] of clients) {
+            if (c.type === 'screen') { screenBack = true; break; }
+          }
+          if (!screenBack) {
+            G = freshState();
+            gameStarted = false;
+            gamePaused = false;
+            broadcastAll({ type: 'hostLeft' });
+            console.log('[*] Profesor no reconectó — juego reiniciado');
+          } else {
+            console.log('[*] Profesor reconectó — juego continúa');
+          }
+        }, 8000);
+      }
+    }
+    clients.delete(ws);
     // Si no quedan clientes, reiniciar estado
     if (clients.size === 0) {
       clearInterval(timerInterval);
       G = freshState();
       gameStarted = false;
       gamePaused = false;
-      teamPlayers.b.clear();
-      teamPlayers.r.clear();
+      teamPlayers = { blue: [], red: [] };
       console.log('[*] Todos desconectados — juego reiniciado');
     }
   });
