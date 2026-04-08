@@ -332,7 +332,7 @@ function connectWS() {
   const proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
   ws = new WebSocket(proto + host);
   ws.onopen = () => {
-    ws.send(JSON.stringify({ type:'register', role:'player', name: MY_NAME }));
+    ws.send(JSON.stringify({ type:'register', role:'blue', name: MY_NAME }));
     setStatus('✅ Conectado', true);
     clearInterval(pingInterval);
     pingInterval = setInterval(() => {

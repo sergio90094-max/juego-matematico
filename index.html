@@ -1027,7 +1027,7 @@ function spawnExplosion(x, y) {
 
 // ── DRAW SHIP ──
 // dir=1 faces right (blue), dir=-1 faces left (red)
-function drawShip(x, y, color, accent, dir, bob) {
+function drawShip(x, y, color, accent, dir, bob, players=[]) {
   const W=cnv.width, H=cnv.height;
   const SW = W * 0.22;   // ship half-width
   const SH = H * 0.32;   // ship height reference
@@ -1218,9 +1218,39 @@ function drawShip(x, y, color, accent, dir, bob) {
   const sc2 = Math.min(W/900, H/350) * 0.9;
   const ppos = dir>0 ? [-0.3,-0.05,0.22] : [0.3,0.05,-0.22];
   ppos.forEach((px,i)=>{
-    figure(SW*px, -SH*0.18, dir,
+    const pirX = SW*px;
+    const pirY = -SH*0.18;
+    figure(pirX, pirY, dir,
       i===0 ? color : (i===1 ? accent : color),
       color, '#111', AF+i*25, sc2);
+
+    // ── Nombre del jugador encima del pirata ──
+    if (players[i]) {
+      const nameStr = players[i].name;
+      const nameY   = pirY - SH*0.32; // encima de la cabeza
+      const pad = 6, fontSize = Math.max(9, Math.min(13, W*0.013));
+      cx.font = `bold ${fontSize}px "Nunito","Fredoka One",sans-serif`;
+      const tw = cx.measureText(nameStr).width;
+      const bw = tw + pad*2, bh = fontSize + pad;
+      const bx = pirX - bw/2, by = nameY - bh/2;
+
+      // Fondo etiqueta
+      cx.beginPath();
+      cx.roundRect(bx, by, bw, bh, 5);
+      cx.fillStyle = 'rgba(0,0,0,0.72)';
+      cx.fill();
+      cx.strokeStyle = color === '#1565C0' ? '#64B5F6' : '#EF9A9A';
+      cx.lineWidth = 1.5;
+      cx.stroke();
+
+      // Texto nombre
+      cx.fillStyle = 'white';
+      cx.textAlign  = 'center';
+      cx.textBaseline = 'middle';
+      cx.fillText(nameStr, pirX, nameY);
+      cx.textAlign = 'left';
+      cx.textBaseline = 'alphabetic';
+    }
   });
 
   cx.restore();
@@ -1419,8 +1449,8 @@ function drawScene() {
   const redX  = W*0.78;
 
   // Draw ships
-  drawShip(blueX, WY, '#1565C0','#0D47A1',  1,  shipBob);
-  drawShip(redX,  WY, '#C62828','#B71C1C', -1, -shipBob);
+  drawShip(blueX, WY, '#1565C0','#0D47A1',  1,  shipBob, teamData.blue);
+  drawShip(redX,  WY, '#C62828','#B71C1C', -1, -shipBob, teamData.red);
 
   // ── CANNON SMOKE ──
   cannonSmoke = cannonSmoke.filter(p=>{

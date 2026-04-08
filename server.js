@@ -778,13 +778,8 @@ function onWsConnection(ws) {
       case 'ping': return;
 
       case 'register': {
-        let assignedRole = msg.role;
-        if (msg.role === 'player') {
-          const blueCount = teamPlayers.blue.size;
-          const redCount  = teamPlayers.red.size;
-          if (blueCount <= redCount) assignedRole = 'blue';
-          else assignedRole = 'red';
-        }
+        // El equipo viene determinado por el link (/blue o /red)
+        let assignedRole = msg.role; // 'blue', 'red' o 'screen'
 
         const playerId = ++playerIdCounter;
         const playerName = (msg.name || '').trim().slice(0, 16) || 'Pirata';
