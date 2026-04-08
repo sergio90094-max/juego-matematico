@@ -263,76 +263,79 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 #music-toggle:hover { background:rgba(255,215,0,0.18); color:#FFD700; }
 #music-toggle:hover { background:rgba(255,255,255,.25); }
 
-/* ══ QR LOBBY ══ */
-#start-card { max-width: 1180px; }
-#start-layout {
-  display:grid;
-  grid-template-columns:minmax(170px,220px) minmax(0,1fr) minmax(170px,220px);
-  gap:18px;
-  align-items:center;
-}
-.qr-side {
+/* === QR laterales en lobby === */
+#start-shell{
+  position:relative;
+  width:min(1280px, 100%);
   display:flex;
-  flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:12px;
-  min-height:100%;
 }
-.qr-panel {
-  width:100%;
-  padding:14px 12px;
-  border-radius:18px;
-  background:rgba(255,255,255,0.06);
-  border:1px solid rgba(255,255,255,0.12);
-  box-shadow:0 0 24px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.06);
+#start-card{
+  position:relative;
+  z-index:2;
 }
-.qr-panel.red {
-  border-color:rgba(229,57,53,0.45);
-  box-shadow:0 0 26px rgba(229,57,53,0.15), inset 0 1px 0 rgba(255,255,255,0.06);
+.qr-lobby{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  width:220px;
+  z-index:1;
+  text-align:center;
 }
-.qr-panel.blue {
-  border-color:rgba(30,136,229,0.45);
-  box-shadow:0 0 26px rgba(30,136,229,0.15), inset 0 1px 0 rgba(255,255,255,0.06);
+.qr-lobby.left{ left:32px; }
+.qr-lobby.right{ right:32px; }
+.qr-card{
+  background:linear-gradient(145deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.05) 100%);
+  border:1px solid rgba(255,255,255,0.16);
+  border-radius:24px;
+  padding:18px 14px 16px;
+  box-shadow:0 10px 35px rgba(0,0,0,0.32);
+  backdrop-filter:blur(10px);
 }
-.qr-team {
+.qr-title{
   font-family:'Fredoka One',cursive;
-  font-size:1rem;
+  font-size:1.05rem;
   margin-bottom:10px;
 }
-.qr-panel.red .qr-team { color:#ff8a80; }
-.qr-panel.blue .qr-team { color:#82b1ff; }
-.qr-box {
-  width:170px;
-  height:170px;
-  margin:0 auto;
-  padding:10px;
-  border-radius:14px;
+.qr-card.red .qr-title{ color:#ff8a80; }
+.qr-card.blue .qr-title{ color:#82b1ff; }
+.qr-subtitle{
+  color:rgba(255,255,255,0.82);
+  font-size:.86rem;
+  line-height:1.25;
+  margin-bottom:12px;
+}
+.qr-img-wrap{
   background:#fff;
+  border-radius:18px;
+  padding:12px;
+  width:180px;
+  height:180px;
+  margin:0 auto;
   display:flex;
   align-items:center;
   justify-content:center;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,0.06);
 }
-.qr-link {
-  margin-top:10px;
-  font-size:.72rem;
-  line-height:1.3;
-  word-break:break-word;
-  color:rgba(255,255,255,0.7);
+.qr-img{
+  width:156px;
+  height:156px;
+  display:block;
+  image-rendering:pixelated;
 }
-#start-center { min-width:0; }
-@media(max-width: 980px){
-  #start-layout { grid-template-columns:1fr; }
-  .qr-side { flex-direction:row; gap:14px; }
-  .qr-panel { max-width:260px; }
+@media (max-width: 1180px){
+  .qr-lobby.left{ left:8px; }
+  .qr-lobby.right{ right:8px; }
+  .qr-lobby{ width:200px; }
+  .qr-img-wrap{ width:164px; height:164px; }
+  .qr-img{ width:140px; height:140px; }
 }
-@media(max-width: 620px){
-  .qr-side { flex-direction:column; }
-  .qr-box { width:150px; height:150px; }
+@media (max-width: 980px){
+  .qr-lobby{ display:none; }
 }
 
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -357,74 +360,70 @@ html, body { width:100%; height:100%; max-width:100%; overflow:hidden; backgroun
 
 <!-- ══ PANTALLA DE INICIO ══ -->
 <div id="start-screen">
-  <div id="start-card">
-    <div id="start-layout">
-      <div class="qr-side">
-        <div class="qr-panel red">
-          <div class="qr-team">🔴 Jugador rojo</div>
-          <div class="qr-box"><div id="qr-red"></div></div>
-          <div class="qr-link">Escanea para unirte al equipo rojo</div>
-        </div>
+  <div id="start-shell">
+    <div class="qr-lobby left">
+      <div class="qr-card red">
+        <div class="qr-title">🔴 Equipo rojo</div>
+        <div class="qr-subtitle">Escanea para entrar rápido</div>
+        <div class="qr-img-wrap"><img class="qr-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXIAAAFyAQAAAADAX2ykAAACjklEQVR4nO2bQW6cQBBFXwWkWTaSD+CjwM2sHCk3gKPkACPRS0ugn0V3A3Y0sq1gAlLVAjHwFl/qqaZ+UZj4Sgw/voSD884777zzzjv/iLccdT7rYg2D1UAs97oD9Ti/M99KkkaQxkrqAevChHVUkiS95b9bj/M78zFnqHUAw/OEemYDwMzqo/U4vw9fv/ut4XnCCHMtYo2Ix+px/tv52Wh/30Q7Vn+b4wvod34TJX+DgAgGN9nQVBhU6d52lc+m3/lP8YOZmTVAO24P1jGn8vlYPc7vxKf8XTNU8GrAbPnRG97u0WfT7/xn+GR4iWYMdhMkazRbLqJjjXUH6nF+L55sbsMErSbUUyUnnK+NIGnKFrk/m37nP8OrB3LqFteblrYPUrlxnB7n9+WtoxKtXksZFSaASgxmBmHKf4GT6nf+YaTuo4rXVR/yFVpNG8T35yvzQzOb+lRVZVeknw3ZKa179ln1O/8ocraqbMgpa5dya0ldz99L8qV/FZ+0PUut5ycZ4V4LFot8Nv3OfxA5Q8tbwXTQmrqjP3+vzJf+VZwNwr22VnO6ZoT7kt3NUXqc35cvawnQ/srraYQ7ghmBMIIycjr9zn8Q2sYEhG1BlazvGr4/X5Jf56/UM5t+phdGpfVsjfujS/NrgtrLWOV2NPFWkjjeZN2Bepzfl1/zl6GZzV7GBYg1ayfrrPqdfxS5omp7gPiUq6qhGWWEVyud6Ll2/3tpvsxP5qnnpSE5mBlDc7ge57+Nr1T250rqy5PYuv+lx/l/4N/Px1qr0oscmhEjVLK29/r5ovy2+bh8upDmN9KQXTLB7n+vzS/zk/YyVjJrqrSqEM3y5ypH6nF+J978+27nnXfeeeedP5z/A+8mg+f7obprAAAAAElFTkSuQmCC" alt="QR equipo rojo"></div>
       </div>
+    </div>
+    <div id="start-card">
+    <div id="start-title">🦜 El Tesoro Matemático</div>
+    <div class="teams-row">
+      <div class="team-badge">🔵 Equipo 1</div>
+      <div class="team-badge">VS</div>
+      <div class="team-badge">🔴 Equipo 2</div>
+    </div>
 
-      <div id="start-center">
-        <div id="start-title">🦜 El Tesoro Matemático</div>
-        <div class="teams-row">
-          <div class="team-badge">🔵 Equipo 1</div>
-          <div class="team-badge">VS</div>
-          <div class="team-badge">🔴 Equipo 2</div>
-        </div>
+    <!-- DIFICULTAD -->
+    <div class="cfg-label">⚓ Dificultad</div>
+    <div id="diff-row">
+      <button class="diff-btn selected" id="diff-easy"   onclick="setDiff('easy')">🟢 Fácil</button>
+      <button class="diff-btn"          id="diff-medium" onclick="setDiff('medium')">🟡 Intermedio</button>
+      <button class="diff-btn"          id="diff-hard"   onclick="setDiff('hard')">🔴 Difícil</button>
+    </div>
+    <div id="diff-desc">Tablas del 1 al 15 · Multiplicación y división directa</div>
 
-        <!-- DIFICULTAD -->
-        <div class="cfg-label">⚓ Dificultad</div>
-        <div id="diff-row">
-          <button class="diff-btn selected" id="diff-easy"   onclick="setDiff('easy')">🟢 Fácil</button>
-          <button class="diff-btn"          id="diff-medium" onclick="setDiff('medium')">🟡 Intermedio</button>
-          <button class="diff-btn"          id="diff-hard"   onclick="setDiff('hard')">🔴 Difícil</button>
-        </div>
-        <div id="diff-desc">Tablas del 1 al 15 · Multiplicación y división directa</div>
-
-        <!-- TEMAS -->
-        <div class="cfg-label">📋 Seleccionar temas
-          <button id="sel-all-btn" onclick="selAll()">✅ Todos</button>
-          <button id="sel-none-btn" onclick="selNone()">❌ Ninguno</button>
-        </div>
-        <div id="topics-grid">
-          <div class="grade-group">
-            <div class="grade-title">📚 Primaria</div>
-            <label class="topic-cb"><input type="checkbox" value="suma" checked> ➕ Suma</label>
-            <label class="topic-cb"><input type="checkbox" value="resta" checked> ➖ Resta</label>
-            <label class="topic-cb"><input type="checkbox" value="multi" checked> ✖️ Multiplicación</label>
-            <label class="topic-cb"><input type="checkbox" value="div" checked> ➗ División</label>
-          </div>
-          <div class="grade-group">
-            <div class="grade-title">📗 Secundaria (6°-8°)</div>
-            <label class="topic-cb"><input type="checkbox" value="potencias"> 🔢 Potencias</label>
-            <label class="topic-cb"><input type="checkbox" value="raices"> √ Raíces cuadradas</label>
-            <label class="topic-cb"><input type="checkbox" value="fracciones"> 🍕 Fracciones</label>
-            <label class="topic-cb"><input type="checkbox" value="porcentajes"> 📊 Porcentajes</label>
-            <label class="topic-cb"><input type="checkbox" value="algebra"> 🔤 Álgebra básica</label>
-          </div>
-          <div class="grade-group">
-            <div class="grade-title">🎓 Bachillerato (9°-11°)</div>
-            <label class="topic-cb"><input type="checkbox" value="algebra2"> 📈 Álgebra intermedia</label>
-            <label class="topic-cb"><input type="checkbox" value="ecuaciones"> ⚖️ Ecuaciones 2° grado</label>
-            <label class="topic-cb"><input type="checkbox" value="trigono"> 📐 Trigonometría</label>
-            <label class="topic-cb"><input type="checkbox" value="logaritmos"> 🔬 Logaritmos</label>
-          </div>
-        </div>
-        <div id="topics-warn" style="display:none">⚠️ Selecciona al menos un tema</div>
-
-        <button id="start-btn" onclick="startMusic()">▶ ¡JUGAR!</button>
-        <div id="creator">✨ Creado por Sergio Arango</div>
+    <!-- TEMAS -->
+    <div class="cfg-label">📋 Seleccionar temas
+      <button id="sel-all-btn" onclick="selAll()">✅ Todos</button>
+      <button id="sel-none-btn" onclick="selNone()">❌ Ninguno</button>
+    </div>
+    <div id="topics-grid">
+      <div class="grade-group">
+        <div class="grade-title">📚 Primaria</div>
+        <label class="topic-cb"><input type="checkbox" value="suma" checked> ➕ Suma</label>
+        <label class="topic-cb"><input type="checkbox" value="resta" checked> ➖ Resta</label>
+        <label class="topic-cb"><input type="checkbox" value="multi" checked> ✖️ Multiplicación</label>
+        <label class="topic-cb"><input type="checkbox" value="div" checked> ➗ División</label>
       </div>
+      <div class="grade-group">
+        <div class="grade-title">📗 Secundaria (6°-8°)</div>
+        <label class="topic-cb"><input type="checkbox" value="potencias"> 🔢 Potencias</label>
+        <label class="topic-cb"><input type="checkbox" value="raices"> √ Raíces cuadradas</label>
+        <label class="topic-cb"><input type="checkbox" value="fracciones"> 🍕 Fracciones</label>
+        <label class="topic-cb"><input type="checkbox" value="porcentajes"> 📊 Porcentajes</label>
+        <label class="topic-cb"><input type="checkbox" value="algebra"> 🔤 Álgebra básica</label>
+      </div>
+      <div class="grade-group">
+        <div class="grade-title">🎓 Bachillerato (9°-11°)</div>
+        <label class="topic-cb"><input type="checkbox" value="algebra2"> 📈 Álgebra intermedia</label>
+        <label class="topic-cb"><input type="checkbox" value="ecuaciones"> ⚖️ Ecuaciones 2° grado</label>
+        <label class="topic-cb"><input type="checkbox" value="trigono"> 📐 Trigonometría</label>
+        <label class="topic-cb"><input type="checkbox" value="logaritmos"> 🔬 Logaritmos</label>
+      </div>
+    </div>
+    <div id="topics-warn" style="display:none">⚠️ Selecciona al menos un tema</div>
 
-      <div class="qr-side">
-        <div class="qr-panel blue">
-          <div class="qr-team">🔵 Jugador azul</div>
-          <div class="qr-box"><div id="qr-blue"></div></div>
-          <div class="qr-link">Escanea para unirte al equipo azul</div>
-        </div>
+    <button id="start-btn" onclick="startMusic()">▶ ¡JUGAR!</button>
+    <div id="creator">✨ Creado por Sergio Arango</div>
+    </div>
+    <div class="qr-lobby right">
+      <div class="qr-card blue">
+        <div class="qr-title">🔵 Equipo azul</div>
+        <div class="qr-subtitle">Escanea para entrar rápido</div>
+        <div class="qr-img-wrap"><img class="qr-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXIAAAFyAQAAAADAX2ykAAACjklEQVR4nO2bS27jMAyGP44MdCnfoEdxbtAjFXMz6yg5wAD2soCMfxaSnTSdvjCOawPkInCQb/EDDCk+ZBPfsfTrWzg477zzzjvvvPPv8VatKU8wmtlpbChPZmZ22lCP8yvznSRpAPUEmT1KpHYyIEiS9Jq/tx7nV+bHJUJjRjo3xdMAmFmztR7n1+Gbm+8GhtJTxrqhtTfd0970O/+x3foXCNm6s0FqQ95cj/P34aOkvjxOBlGC+FJytqR8y99bj/Or8snMzFqgG4JgbKA7PwiYrNbUW+pxfiW+5OebY1aMQGoDEF//tjf9zn9ipfnpJNENADHXdqkHas6OFVG/N/3Of2w1fpOFXGI1PQWRSjoOmW5ogXFOz7vT7/wnVqYXGsKch2OuH90Q5sCWx+9B+erfvhTMdYhVfRmr79Vfcvbe9Dv/NX5sUD821NaIyYCpzrS6YTmJ96rf+Xdszs/Lk/Li0FDDGfD4PSZ/nZ9vvLqcv2US7f49Ir9EbT1mJWXmhVEQ3RDmmHb/HpCf+99SP4erqmoeUtacXf8Ce9Pv/Nf4+GK1NWIys3ayUnPpXAeXdtpUj/Nr8urHhzp1Lln53CANYKcoSWUSvZ0e59fmY0Z9zNjzMPdC6TFTfR5ffL9wTL7MJ434pwEMMbbQ9QKYGlKLQRxk2+hxfl3+un6+rrSAbq6afT55dP5yfxKY7GqqwdhA8vtXR+Wv9oPSpdcd4DJ1pvP+6Oj8fH/SzBr0u52TdDIzUhtkp031OH8ffp5UTmbP54Z6XXb4MT3Or85PtVRObR1HlyD+MT3O/wf/z/O3LBn6C+T736Pyyy4BgKCakJW52vnXxYP793j82zcUPjR/v9t555133nnnV+D/As6w5Sk5KXyjAAAAAElFTkSuQmCC" alt="QR equipo azul"></div>
       </div>
     </div>
   </div>
@@ -1873,29 +1872,6 @@ function toggleMusic() {
     </div>
   </div>
 </div>
-
-
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-  var redUrl = 'https://juego-matematico.onrender.com/red';
-  var blueUrl = 'https://juego-matematico.onrender.com/blue';
-
-  function makeQR(id, url) {
-    var el = document.getElementById(id);
-    if (!el || typeof QRCode === 'undefined') return;
-    el.innerHTML = '';
-    new QRCode(el, {
-      text: url,
-      width: 150,
-      height: 150,
-      correctLevel: QRCode.CorrectLevel.H
-    });
-  }
-
-  makeQR('qr-red', redUrl);
-  makeQR('qr-blue', blueUrl);
-});
-</script>
 
 </body>
 </html>
