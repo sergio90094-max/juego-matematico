@@ -7,6 +7,7 @@
 const http    = require('http');
 const fs      = require('fs');
 const path    = require('path');
+const crypto  = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 
@@ -566,6 +567,8 @@ function handleDelete(team, senderWs) {
 /* ══════════════════════════════════════
    HTTP SERVER — sirve archivos estáticos
 ══════════════════════════════════════ */
+const STATIC_CACHE = new Map();
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js':   'application/javascript',
@@ -578,32 +581,56 @@ const MIME = {
 };
 
 const httpServer = http.createServer((req, res) => {
-  // ── Endpoint para UptimeRobot — responde rápido sin leer archivos ──
   if (req.url === '/ping') {
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
     res.end('OK');
     return;
   }
-  let filePath;
-  if (req.url === '/' || req.url === '/index.html') {
-    filePath = path.join(__dirname, 'index.html');
-  } else if (req.url === '/blue') {
-    filePath = path.join(__dirname, 'blue.html');
-  } else if (req.url === '/red') {
-    filePath = path.join(__dirname, 'red.html');
-  } else {
-    filePath = path.join(__dirname, req.url);
+
+  const cleanUrl = (req.url || '/').split('?')[0];
+  let fileName;
+  if (cleanUrl === '/' || cleanUrl === '/index.html') fileName = 'index.html';
+  else if (cleanUrl === '/blue') fileName = 'blue.html';
+  else if (cleanUrl === '/red') fileName = 'red.html';
+  else fileName = cleanUrl.replace(/^\//, '');
+
+  const filePath = path.resolve(__dirname, fileName);
+  if (!filePath.startsWith(path.resolve(__dirname))) {
+    res.writeHead(403, { 'Content-Type': 'text/plain; charset=utf-8' });
+    res.end('Forbidden');
+    return;
   }
 
-  fs.readFile(filePath, (err, data) => {
-    if (err) {
-      res.writeHead(404); res.end('Not found');
+  fs.stat(filePath, (err, stat) => {
+    if (err || !stat.isFile()) {
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
+      res.end('Not found');
       return;
     }
+
     const ext  = path.extname(filePath);
-    const mime = MIME[ext] || 'text/plain';
-    res.writeHead(200, { 'Content-Type': mime });
-    res.end(data);
+    const mime = MIME[ext] || 'application/octet-stream';
+    const cacheKey = `${filePath}:${stat.mtimeMs}:${stat.size}`;
+    let etag = STATIC_CACHE.get(cacheKey);
+    if (!etag) {
+      etag = `W/"${stat.size}-${Number(stat.mtimeMs).toString(16)}"`;
+      STATIC_CACHE.clear();
+      STATIC_CACHE.set(cacheKey, etag);
+    }
+
+    if (req.headers['if-none-match'] === etag) {
+      res.writeHead(304, { 'ETag': etag, 'Cache-Control': 'public, max-age=300' });
+      res.end();
+      return;
+    }
+
+    res.writeHead(200, {
+      'Content-Type': mime,
+      'Content-Length': stat.size,
+      'Cache-Control': ext === '.html' ? 'no-cache' : 'public, max-age=300',
+      'ETag': etag
+    });
+    fs.createReadStream(filePath).pipe(res);
   });
 });
 
@@ -613,7 +640,6 @@ const httpServer = http.createServer((req, res) => {
    Implementación RFC 6455
 ══════════════════════════════════════ */
 
-const crypto = require('crypto');
 
 function wsHandshake(req, socket) {
   const key = req.headers['sec-websocket-key'];

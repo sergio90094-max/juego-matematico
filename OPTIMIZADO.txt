@@ -1,0 +1,12 @@
+Proyecto optimizado.
+
+Cambios principales:
+- Se quitó el audio embebido en base64 del index y se dejó carga externa/lazy para reducir muchísimo el peso inicial.
+- El sonido de explosión ahora se genera con Web Audio en vez de cargar otro audio pesado.
+- Se redujo y adaptó la cantidad de partículas, confeti, humo y estrellas según el dispositivo.
+- La animación principal ahora corre limitada a 30/45 FPS y se pausa cuando la pestaña está oculta.
+- El servidor ahora sirve archivos por stream y con cache headers para cargas más rápidas.
+
+Para ejecutar:
+1. npm start
+2. Abrir http://localhost:3000
